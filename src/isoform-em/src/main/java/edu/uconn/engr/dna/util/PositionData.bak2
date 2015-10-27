@@ -1,0 +1,155 @@
+/*
+ *  Copyright 2010 marius.
+ * 
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * 
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  under the License.
+ */
+package edu.uconn.engr.dna.util;
+
+import edu.uconn.engr.dna.format.Isoforms;
+import edu.uconn.engr.dna.isoem.ArrayIsoformList;
+import edu.uconn.engr.dna.isoem.IsoformList;
+import java.util.Arrays;
+
+/**
+ *
+ * @author marius
+ */
+public class PositionData {
+
+	private static int[] maxPowerOfTwoBelow = new int[]{0, 1};
+	private static int precomputedPowers = 2;
+	private static final Double one = 1.0;
+	private String[] isoforms;
+	private Intervals[] isoformExons;
+	private int[] startIndex;
+
+	public PositionData(Isoforms allIsos, String[] isoforms, int[] startIndex) {
+		this.isoformExons = new Intervals[isoforms.length];
+		this.isoforms = isoforms;
+		for (int i = 0; i < isoforms.length; ++i) {
+			this.isoformExons[i] = allIsos.get(isoforms[i]).getExons();
+		}
+		this.startIndex = startIndex;
+
+		if (isoforms.length >= precomputedPowers) {
+			synchronized (PositionData.class) {
+				while (isoforms.length >= precomputedPowers) {
+					doublePrecomputedPowers();
+				}
+			}
+		}
+
+	}
+
+	public IsoformList findMatches(int[] readCoord) {
+		int lo = 0;
+		int hi = isoforms.length;
+		int level = 0;
+		// ignore first coord of the read (assumed to be covered)
+		// leave last coordinate for later processing
+		int end = readCoord.length - 1;
+		for (int i = 1; i < end; ++i, ++level) {
+			int key = readCoord[i];
+			lo = findLeftMostGreaterOrEqual(level, key, lo, hi);
+			if (lo == hi || isoformExons[lo].getCoord(level + startIndex[lo]) != key) {
+				return null;
+			}
+			hi = findRightMostLessOrEqual(level, key, lo, hi) + 1;
+		}
+
+		// handle last coordinate: greater or equal coordinates are sufficient
+		lo = findLeftMostGreaterOrEqual(level, readCoord[end], lo, hi);
+		if (lo == hi) {
+			return null;
+		}
+
+		String[] isos = sort(isoforms, lo, hi);
+		return new ArrayIsoformList(isos,
+						Utils.arrayOf(hi - lo, 1.0));
+	}
+
+	private String[] sort(String[] isoforms, int lo, int hi) {
+//		int l = hi - lo;
+//		if (l < 7) { // insert sort
+//			Integer[] a = new Integer[l];
+//			for (int i = lo; i < hi; ++i) {
+//				Integer k = isoforms[i];
+//				int j = i - lo;
+//				while (j > 0 && k.compareTo(a[j - 1]) < 0) {
+//					a[j] = a[--j];
+//				}
+//				a[j] = k;
+//			}
+//			return a;
+//		} else {
+			String[] a = Arrays.copyOfRange(isoforms, lo, hi);
+			Arrays.sort(a);
+			return a;
+//		}
+	}
+
+	/**
+	 * Returns the leftmost index in the interval [lo, hi) which has a value on
+	 * the given level greater or equal to key. Returns hi if all the values in
+	 * the interval are strictly less than the key
+	 * @param level
+	 * @param key
+	 * @param lo
+	 * @param hi
+	 * @return
+	 */
+	private int findLeftMostGreaterOrEqual(int level, int key, int lo, int hi) {
+		int k = hi;
+		for (int step = maxPowerOfTwoBelow[hi - lo]; step > 0; step >>= 1) {
+			int nk = k - step;
+			if (nk >= lo) {
+				int index = level + startIndex[nk];
+				if (index < isoformExons[nk].getNCoords()) {
+					int nv = isoformExons[nk].getCoord(index);
+					if (nv >= key) {
+						k = nk;
+					}
+				}
+			}
+		}
+		return k;
+	}
+
+	private int findRightMostLessOrEqual(int level, int key, int lo, int hi) {
+		int k = lo;
+		for (int step = maxPowerOfTwoBelow[hi - lo]; step > 0; step >>= 1) {
+			int nk = k + step;
+			if (nk < hi) {
+				int index = level + startIndex[nk];
+				if (index < isoformExons[nk].getNCoords()) {
+					int nv = isoformExons[nk].getCoord(index);
+					if (nv <= key) {
+						k = nk;
+					}
+				}
+			}
+		}
+		return k;
+	}
+
+	private static void doublePrecomputedPowers() {
+		int n = precomputedPowers << 1;
+		maxPowerOfTwoBelow = Arrays.copyOf(maxPowerOfTwoBelow, n);
+		int p = maxPowerOfTwoBelow[precomputedPowers - 1] * 2;
+		for (int i = precomputedPowers; i < n; ++i) {
+			maxPowerOfTwoBelow[i] = p;
+		}
+		precomputedPowers = n;
+	}
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+isoEMDir=/home/software/public_html/IsoEM/isoem-1.1.3
+
+echo isoem v 1.1.3
+
+mem=`free | grep -o -e 'Mem:\s*[0-9]*' | grep -o -E '[0-9]+'`
+mem=$((mem/2048))
+if [ -n $mem ]
+then
+        maxMem=-Xmx${mem}M
+        startMem=-Xms${mem}M
+fi
+
+java $startMem $maxMem -cp "${isoEMDir}/lib/junit-4.8.1.jar:${isoEMDir}/lib/jopt-simple-3.2.jar:${isoEMDir}/lib/log4j-1.2.14.jar:${isoEMDir}/lib/isoform-common-1.0.jar:${isoEMDir}/lib/isoform-accuracy-1.0:${isoEMDir}/lib/isoform-em-1.0.jar" edu.uconn.engr.dna.isoem.Startup $@

@@ -1,0 +1,93 @@
+package edu.uconn.engr.dna.isoem;
+
+import edu.uconn.engr.dna.util.SingleBatchThreadPoolExecutor;
+import edu.uconn.engr.dna.isoem.processor.*;
+import edu.uconn.engr.dna.probability.CumulativeProbabilityDistribution;
+import edu.uconn.engr.dna.probability.MapProbabilityDistribution;
+import edu.uconn.engr.dna.util.*;
+
+import org.apache.log4j.Logger;
+
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: marius
+ * Date: Jun 21, 2010
+ * Time: 10:36:09 AM
+ * To change this template use File | Settings | File Templates.
+ */
+public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
+    private static final Logger log = Logger.getLogger(IsoEMFlowAutoProbabilityDistribution.class);
+    private IsoEMFlowTool t;
+
+    public IsoEMFlowAutoProbabilityDistribution(IsoEMFlowTool tool) {
+        this.t = tool;
+    }
+
+    @Override
+    public Map<String, Double> computeFpkms(Reader inputFile) throws Exception {
+
+        Map<Integer, Integer> probMap = new HashMap<Integer, Integer>();
+        List<IsoformListsBean> isoformsForAlignmentsList = new ArrayList<IsoformListsBean>();
+        t.parse(inputFile, t.getNThreads(),
+                createSamToProbabilityDistributionRunnableFactory(probMap, isoformsForAlignmentsList));
+        System.out.println("pd size "+probMap.size());
+        CumulativeProbabilityDistribution pd = new MapProbabilityDistribution(Utils.normalizeMap(probMap));
+        log.debug("Found " + probMap.size() + " different fragment lengths ");
+        log.debug("Mean " + pd.getMean() + " dev " + Math.sqrt(pd.getVariance()));
+        System.out.println("Mean " + pd.getMean() + " dev " + Math.sqrt(pd.getVariance()));
+
+        SingleBatchThreadPoolExecutor<List<IsoformList>, List<List<IsoformList>>> cluster
+                = t.getClusterProcess();
+        BatchThreadPoolExecutor.newInstance(t.getNThreads() - 1,
+                createIsosPerAlignmentToClusterRunnableFactory(pd, cluster))
+                .processAll(isoformsForAlignmentsList).waitForTermination();
+        List<List<IsoformList>> clusters = cluster.waitForTermination();
+        log.debug("Reads after compact: "
+                + t.countReads2(clusters) + " in "
+                + t.countReadClasses(clusters) + " readClasses;"
+                + " clusters " + clusters.size());
+		System.out.println("Reads in the sam file: " + SamLinesToCoordParameterRunnable2.globalCount);
+		System.out.println("Reads after processing quality scores: " + CoordToIsoformListForAlignmentsParameterRunnable2.totalNReads);
+		System.out.println("Reads after computing compatibilities: " + AlignmentToReadConverter.totalReads);
+		System.out.println("Reads that go into EM (possibly scaled if bias correction is enabled): " + t.countReads2(clusters));
+
+        Map<String, Double> map = t.runEM(clusters, t.createAdjustedIsoLengths(pd));
+        return EmUtils.fpkm(map, t.getIsoforms(), pd.getMean());
+    }
+
+    private ParameterRunnableFactory<List<String>, Object> createSamToProbabilityDistributionRunnableFactory(
+            final Map<Integer, Integer> probMap,
+            final List<IsoformListsBean> isoformsForAlignmentsList) {
+        return new ParameterRunnableFactory<List<String>, Object>() {
+            @Override
+            public ParameterRunnable<List<String>, Object> createParameterRunnable() {
+                return t.createSamLinesToCoord2Runnable(
+                       t.createCoordToIsoformListRunnable2(null,
+                       new CountFragmentsForUniqueReads(probMap, isoformsForAlignmentsList)));
+            }
+        };
+    }
+
+
+    public ParameterRunnableFactory<IsoformListsBean, Void> createIsosPerAlignmentToClusterRunnableFactory(
+            final CumulativeProbabilityDistribution pd,
+            final ParameterRunnable<List<IsoformList>, ?> forwardProcess) {
+        return new ParameterRunnableFactory<IsoformListsBean, Void>() {
+            @Override
+            public ParameterRunnable<IsoformListsBean, Void> createParameterRunnable() {
+                return new ChangeFragmentLengthToProbability(pd,
+                       new AlignmentToReadConverter(
+                       new NormalizeIsoformListsParameterRunnable(
+                       forwardProcess)));
+            }
+        };
+    }
+
+
+}

@@ -1,0 +1,38 @@
+#!/bin/sh
+
+cd src
+cd isoform-common
+make all
+cd ..
+cd isoform-accuracy
+make all
+cd ..
+cd isoform-em
+make all
+cd ..
+cd ..
+
+rootPath=`pwd`
+
+for file in SEQ_FREQ-auto.sh SEQ_FREQ.sh
+do
+	awk -v p="isoEMDir=${rootPath}" '{if (index($0,"isoEMDir=") == 1) print p; else print $0}' $file > ${file}.tmp
+	rm ${file}
+	mv ${file}.tmp ${file}
+done
+
+chmod uog+x SEQ_FREQ*.sh
+
+
+cd bin
+													  
+for file in `ls`
+do
+	awk -v p="isoEMDir=${rootPath}" '{if (index($0,"isoEMDir=") == 1) print p; else print $0}' $file > ${file}.tmp
+	rm ${file}
+	mv ${file}.tmp ${file}
+done
+chmod uog+x *
+
+
+cd ..
