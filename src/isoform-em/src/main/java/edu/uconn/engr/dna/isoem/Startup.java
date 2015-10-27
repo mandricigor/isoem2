@@ -197,6 +197,9 @@ public class Startup {
 				System.out.println("Parsing reads file... " + samReadsFile);
 				Map<String, Double> freq = flow.computeFpkms(EmUtils.getSamReader(samReadsFile));
 				EmUtils.addMissingIds(freq, isoforms.idIterator());
+
+                                Map<String, Double> tpms = EmUtils.computeTpms(freq);                                
+
 				String outputFileNamePrefix =  null;
 				if (options.has(OP_OUTPUT_FILE_PREFIX)) {
 					outputFileNamePrefix = options.valueOf(OP_OUTPUT_FILE_PREFIX).toString();
@@ -207,19 +210,38 @@ public class Startup {
 						outputFileNamePrefix += "_" + readLimit;
 					}
 				}
-				String isoOutputFileName = outputFileNamePrefix + ".iso_estimates";
+
+                                // writing fpkms for isoforms
+				String isoOutputFileName = outputFileNamePrefix + ".iso_fpkm_estimates";
 				System.out.println("Writing isoform FPKMs to "
 								+ isoOutputFileName);
 				writeValues(sortEntriesDesc(freq), isoOutputFileName);
 
-				String geneOutputFileName = outputFileNamePrefix + ".gene_estimates";
+                                // writing tmps for isoforms
+				String isoTpmFileName = outputFileNamePrefix + ".iso_tpm_estimates";
+				System.out.println("Writing isoform TPMs to "
+								+ isoTpmFileName);
+				writeValues(sortEntriesDesc(tpms), isoTpmFileName);
+                                //----------------------------------
 				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
-                            Map<String, Double> fpkm_weigthedGeneLengths= Utils.fpkmWeigthedGeneLengths(freq,isoforms, isoformToClusterMap);
+                                Map<String, Double> fpkm_weigthedGeneLengths= Utils.fpkmWeigthedGeneLengths(freq,isoforms, isoformToClusterMap);
 				freq = Utils.groupByCluster(freq, isoformToClusterMap);
 				EmUtils.addMissingIds(freq, clusters.idIterator());
+
+                                tpms = EmUtils.computeTpms(freq);
+                                // writing fpkms for genes
+				String geneOutputFileName = outputFileNamePrefix + ".gene_fpkm_estimates";
 				System.out.println("Writing gene FPKMs to "
 								+ geneOutputFileName);
 				writeValues(sortEntriesDesc(freq), geneOutputFileName);
+                                // writing tpms for genes
+				String geneTpmFileName = outputFileNamePrefix + ".gene_tpm_estimates";
+				System.out.println("Writing gene TPMs to "
+								+ geneTpmFileName);
+				writeValues(sortEntriesDesc(tpms), geneTpmFileName);
+
+
+
 //				System.out.println("Writing FPKM weightd gene lengths to "
 //								+ "fpkm_whgted_avg_gene_lengths.txt");
 //				writeValues(sortEntriesDesc(fpkm_weigthedGeneLengths), "fpkm_whgted_avg_gene_lengths.txt");

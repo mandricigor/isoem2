@@ -99,4 +99,21 @@ public class EmUtils extends edu.uconn.engr.dna.util.EmUtils {
 		samReader = new BufferedReader(samReader, BUFF_SIZE);
 		return samReader;
 	}
+
+	public static Map<String, Double> computeTpms(Map<String, Double> frequencies) {
+		Map<String, Double> tpms = new HashMap<String, Double>();
+                double freqSum = 0.0;
+		for (Map.Entry<String, Double> entry : frequencies.entrySet()) {
+		    freqSum += entry.getValue();
+		}
+                for (Map.Entry<String, Double> entry: frequencies.entrySet()) {
+                    double tpm = (entry.getValue() / freqSum) * 1000000; // tpm = fpkm * 10^6 / (sum of fpkms)
+                    tpms.put(entry.getKey(), tpm);
+                }
+                return tpms;
+	}
+
+
+
+
 }
