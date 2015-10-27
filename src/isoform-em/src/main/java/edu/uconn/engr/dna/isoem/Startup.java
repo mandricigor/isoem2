@@ -53,10 +53,25 @@ public class Startup {
 		}
 
 		List<String> samFiles = options.nonOptionArguments();
+                
+                if (samFiles.size() < 1) {
+                    // add option to read from stdin
+                    if (!options.has(OP_OUTPUT_FILE_PREFIX)) { // if you read from stdin, provide output file prefix
+			parser.printHelpOn(System.out);
+			System.exit(1);
+                    }
+                    else {
+                        samFiles = new ArrayList<String>();
+                        samFiles.add("stdin");
+                    }
+                }
+
+                /*
 		if (!options.has(OP_GTF) || samFiles.size() < 1 || options.has(OP_HELP)) {
 			parser.printHelpOn(System.out);
 			System.exit(1);
 		}
+                */
 
 		if ((options.has(OP_MISMATCHES) || options.has(OP_QUALITY))
 						&& !options.has(OP_GENOME)) {

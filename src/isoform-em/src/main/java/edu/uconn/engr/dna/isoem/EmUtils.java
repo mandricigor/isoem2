@@ -89,7 +89,12 @@ public class EmUtils extends edu.uconn.engr.dna.util.EmUtils {
 		if (samReadsFile.endsWith(".gz")) {
 			samReader = new InputStreamReader(new GZIPInputStream(new FileInputStream(samReadsFile)));
 		} else {
-			samReader = new FileReader(samReadsFile);
+                        if ("stdin".equals(samReadsFile)) { // yeah, I know it is a stupid hardcode
+                            samReader = new InputStreamReader(System.in);
+                        }
+                        else {
+			    samReader = new FileReader(samReadsFile);
+                        }
 		}
 		samReader = new BufferedReader(samReader, BUFF_SIZE);
 		return samReader;
