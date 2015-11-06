@@ -23,20 +23,19 @@ import java.util.Map;
  */
 public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
     private static final Logger log = Logger.getLogger(IsoEMFlowAutoProbabilityDistribution.class);
-    private CumulativeProbabilityDistribution pd;
     private IsoEMFlowTool t;
 
     public IsoEMFlowAutoProbabilityDistribution(IsoEMFlowTool tool) {
         this.t = tool;
-        this.pd = null;
     }
+
 
     public List<List<IsoformList>> computeClusters(Reader inputFile) throws Exception {
         Map<Integer, Integer> probMap = new HashMap<Integer, Integer>();
         List<IsoformListsBean> isoformsForAlignmentsList = new ArrayList<IsoformListsBean>();
         t.parse(inputFile, t.getNThreads(),
                 createSamToProbabilityDistributionRunnableFactory(probMap, isoformsForAlignmentsList));
-        System.out.println("pd size "+probMap.size());
+
         pd = new MapProbabilityDistribution(Utils.normalizeMap(probMap));
         log.debug("Found " + probMap.size() + " different fragment lengths ");
         log.debug("Mean " + pd.getMean() + " dev " + Math.sqrt(pd.getVariance()));
@@ -44,12 +43,12 @@ public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
 
         SingleBatchThreadPoolExecutor<List<IsoformList>, List<List<IsoformList>>> cluster
                 = t.getClusterProcess();
-
         BatchThreadPoolExecutor.newInstance(t.getNThreads() - 1,
                 createIsosPerAlignmentToClusterRunnableFactory(pd, cluster))
                 .processAll(isoformsForAlignmentsList).waitForTermination();
         return cluster.waitForTermination();
     }
+
 
 
     @Override
@@ -58,14 +57,18 @@ public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
                 + t.countReads2(clusters) + " in "
                 + t.countReadClasses(clusters) + " readClasses;"
                 + " clusters " + clusters.size());
-		System.out.println("Reads in the sam file: " + SamLinesToCoordParameterRunnable2.globalCount);
-		System.out.println("Reads after processing quality scores: " + CoordToIsoformListForAlignmentsParameterRunnable2.totalNReads);
-		System.out.println("Reads after computing compatibilities: " + AlignmentToReadConverter.totalReads);
-		System.out.println("Reads that go into EM (possibly scaled if bias correction is enabled): " + t.countReads2(clusters));
-
+                System.out.println("Reads in the sam file: " + SamLinesToCoordParameterRunnable2.globalCount);
+                System.out.println("Reads after processing quality scores: " + CoordToIsoformListForAlignmentsParameterRunnable2.totalNReads);
+                System.out.println("Reads after computing compatibilities: " + AlignmentToReadConverter.totalReads);
+                System.out.println("Reads that go into EM (possibly scaled if bias correction is enabled): " + t.countReads2(clusters));
         Map<String, Double> map = t.runEM(clusters, t.createAdjustedIsoLengths(pd));
         return EmUtils.fpkm(map, t.getIsoforms(), pd.getMean());
     }
+
+
+
+
+
 
     private ParameterRunnableFactory<List<String>, Object> createSamToProbabilityDistributionRunnableFactory(
             final Map<Integer, Integer> probMap,

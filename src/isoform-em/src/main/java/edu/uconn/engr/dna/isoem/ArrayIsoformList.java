@@ -19,6 +19,9 @@ package edu.uconn.engr.dna.isoem;
 import java.util.NoSuchElementException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import static java.lang.Double.doubleToLongBits;
 
 /**
@@ -33,13 +36,34 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 	private String[] name;
 	private double[] weight;
 	private int h;
+        public Map<String, ArrayList<Double>> weightMap;
 
 	public ArrayIsoformList(String[] name, double[] weight) {
 		assert (name.length == weight.length);
 		this.name = name;
 		this.weight = weight;
 		this.size = name.length;
+                this.weightMap = new HashMap<String, ArrayList<Double>>();
 	}
+
+
+        public ArrayIsoformList(ArrayIsoformList another) {
+            this.multiplicity = another.getMultiplicity();
+            this.qualityScore = another.getQualityScore();
+            this.size = another.size();
+            this.name = new String[another.getName().length];
+            System.arraycopy(another.getName(), 0, this.name, 0, another.getName().length);
+            this.weight = new double[another.getWeight().length];
+            System.arraycopy(another.getWeight(), 0, this.weight, 0, another.getWeight().length);
+            this.weightMap = new HashMap<String, ArrayList<Double>>();
+            for (Map.Entry<String, ArrayList<Double>> entry: another.weightMap.entrySet()) {
+                ArrayList<Double> weights = entry.getValue();
+                ArrayList<Double> new_weights = new ArrayList<Double>(weights);
+                this.weightMap.put(entry.getKey(), new_weights);
+            }
+            this.h = another.h;
+        }
+
 
 	@Override
 	public int size() {
@@ -76,6 +100,24 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 		fillNullsOrAdjustSize();
 		h = 0;
 	}
+
+
+        public void reuniteMaps(IsoformList isoformList) {
+            ArrayIsoformList aiso = (ArrayIsoformList) isoformList;
+            for (Map.Entry<String, ArrayList<Double>> entry : aiso.weightMap.entrySet()) {
+                ArrayList<Double> weights = weightMap.get(entry.getKey());
+                if (weights != null) {
+                    for (int i = 0; i < entry.getValue().size(); i ++) {
+                        weights.add(entry.getValue().get(i));
+                    }
+                }
+                else {
+                    weightMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+
 
 	@Override
 	public void reunite(IsoformList isoformList) {
@@ -131,6 +173,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 		size = k;
 		fillNullsOrAdjustSize();
 		h = 0;
+                reuniteMaps(isoformList);
 	}
 
 	@Override

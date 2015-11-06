@@ -91,11 +91,31 @@ public class CoordToIsoformListForAlignmentsParameterRunnable2
 			}
 		}
 		if (processor != null) {
+                        populateMaps(isoformsForAlignment);
 			processor.run(new IsoformListsBean(isoformsForAlignment, fragmentLenForAlignment,
 							bean.getReadStarts()));
 		}
 
 	}
+
+
+
+        private void populateMaps(IsoformList[] isos) {
+            for (IsoformList iso: isos) {
+                ArrayIsoformList aiso = (ArrayIsoformList) iso;
+                if (aiso != null) {
+                    double[] w = aiso.getWeight();
+                    String[] n = aiso.getName();
+                    Map<String, ArrayList<Double>> weightMap = aiso.weightMap;
+                    for (int i = 0; i < w.length; i ++) {
+                        ArrayList<Double> weightList = new ArrayList<Double>();
+                        weightList.add(w[i]);
+                        weightMap.put(n[i], weightList);
+                    }
+                }
+            }
+        }
+
 
 	private void processSortedCoordinates(Coord2[] rc,
 					Pair<int[], PositionData[]> sortedIsoformCoord) {

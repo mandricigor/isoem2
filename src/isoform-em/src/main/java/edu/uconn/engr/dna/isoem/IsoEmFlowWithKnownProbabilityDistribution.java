@@ -32,17 +32,20 @@ public class IsoEmFlowWithKnownProbabilityDistribution implements IsoEMFlow {
 		this.pd = pd;
 	}
 
-	@Override
-	public Map<String, Double> computeFpkms(Reader inputFile) throws Exception {
-		long start = System.currentTimeMillis();
+	public List<List<IsoformList>> computeClusters(Reader inputFile) throws Exception {
+
+		//long start = System.currentTimeMillis();
 		SingleBatchThreadPoolExecutor<List<IsoformList>, List<List<IsoformList>>> cluster = t.getClusterProcess();
 
 		t.parse(inputFile, t.getNThreads() - 1, // leave one thread for clustering
 						createFromSamToClustersRunnableFactory(pd, cluster));
+		return cluster.waitForTermination();
+        }
 
-		List<List<IsoformList>> clusters = cluster.waitForTermination();
 
-		log.debug("Parser time " + (System.currentTimeMillis() - start));
+
+        public Map<String, Double> computeFpkms(List<List<IsoformList>> clusters) throws Exception {
+		//log.debug("Parser time " + (System.currentTimeMillis() - start));
 		log.debug("Reads after compacting: "
 						+ t.countReads2(clusters) + " in "
 						+ t.countReadClasses(clusters) + " readClasses;"
@@ -57,7 +60,6 @@ public class IsoEmFlowWithKnownProbabilityDistribution implements IsoEMFlow {
 		long start2 = System.currentTimeMillis();
 		Map<String, Double> adjustedWeights =  t.createAdjustedIsoLengths(pd);
 		Map<String, Double> map = t.runEM(clusters, adjustedWeights);
-//        return EmUtils.normalize(map);
 		Map<String, Double> result;
 		if (!t.isReportCounts()) {
 			result = EmUtils.fpkm(map, adjustedWeights);

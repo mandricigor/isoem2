@@ -2,6 +2,10 @@ package edu.uconn.engr.dna.isoem;
 
 import java.io.Reader;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,5 +15,6 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public interface IsoEMFlow {
-    Map<String, Double> computeFpkms(Reader inputFile) throws Exception;
+    Map<String, Double> computeFpkms(List<List<IsoformList>> clusters) throws Exception;
+    List<List<IsoformList>> computeClusters(Reader inputFile) throws Exception;
 }

@@ -29,7 +29,11 @@ public class IsoEmOptionParser extends OptionParser {
 	public static final String OP_COUNT = "report-counts";
 	public static final String OP_POLYA = "polyA";
   	public static final String OP_LIMIT_NREADS = "limit-nreads";
-  	public static final String OP_OUTPUT_FILE_PREFIX = "o";
+  	public static final String OP_OUTPUT_DIR = "o";
+  	public static final String OP_OUTPUT_FILE_PREFIX = "O";
+        public static final String OP_NUMBER_BOOTSTRAPS = "B"; // how many bootstraps to do if any
+        public static final String OP_CONFIDENCE_VALUE = "C"; // confidence intervals
+
 
 	public IsoEmOptionParser() {
 		acceptsAll(asList(OP_HELP, "help"), "Show help");
@@ -68,6 +72,9 @@ public class IsoEmOptionParser extends OptionParser {
 						+ String.format("This requires the genome sequence to be specified (see -%s).", OP_GENOME));
 		accepts(OP_BIAS, "Perform hexamer bias correction");
 		accepts(OP_ANNOTATED_REPEATS_FILE, "Drop alignments falling withing annotated repeats").withRequiredArg().describedAs("Repeats GTF");
+		accepts(OP_NUMBER_BOOTSTRAPS, "Number of bootstrap iterations").withRequiredArg().ofType(Integer.class).describedAs("Number of bootstrap iterations");
+		accepts(OP_CONFIDENCE_VALUE, "Confidence value (default 95)").withRequiredArg().ofType(Integer.class).describedAs("Confidence value");
+
 		accepts(OP_REPEAT_THRESHOLD,
 						"Drop all reads that have more than this many bases inside annotated repeats. Default: 20.").withRequiredArg().describedAs("nbases");
 		accepts(OP_UNIQ, "Infer frequencies from uniquely mapped reads only");
@@ -78,7 +85,8 @@ public class IsoEmOptionParser extends OptionParser {
 						).withRequiredArg().ofType(Integer.class).describedAs("nbases");
   		accepts(OP_LIMIT_NREADS, "Discard all reads after this many have been read"
 				).withRequiredArg().ofType(Integer.class).describedAs("nreads");
-		accepts(OP_OUTPUT_FILE_PREFIX, "Use this as the filename for the two output files (different extensions will be added)").withRequiredArg().describedAs("prefix");
+		accepts(OP_OUTPUT_DIR, "Use this as the name of the output directory").withRequiredArg().describedAs("prefix");
+		accepts(OP_OUTPUT_FILE_PREFIX, "Use this as the filename prefix").withRequiredArg().describedAs("prefix");
 	}
 
 	@Override

@@ -36,6 +36,18 @@ public class Startup {
 	public Startup() {
 	}
 
+
+        public static int generateRandomNber(int aStart, int aEnd){
+                Random random = new Random();
+            long range = (long)aEnd - (long)aStart + 1; //get the range, casting to long to avoid overflow problems         
+            long fraction = (long)(range * random.nextDouble()); // compute a fraction of the range, 0 <= frac < range
+            int randomNumber =  (int)(fraction + aStart);
+            return randomNumber;
+        }
+
+
+
+
 	public static void main(String[] argsList) throws Exception {
 //		for (int i = 0; i < argsList.length; ++i) {
 //			System.out.println(argsList[i]);
@@ -52,18 +64,33 @@ public class Startup {
 			return;
 		}
 
+                if (!options.has(OP_OUTPUT_DIR)) { // if you read from stdin, provide output file prefix
+		    parser.printHelpOn(System.out);
+		    System.exit(1);
+                }
+
+                String oDir = options.valueOf(OP_OUTPUT_DIR).toString();
 		List<String> samFiles = options.nonOptionArguments();
                 
                 if (samFiles.size() < 1) {
                     // add option to read from stdin
-                    if (!options.has(OP_OUTPUT_FILE_PREFIX)) { // if you read from stdin, provide output file prefix
-			parser.printHelpOn(System.out);
-			System.exit(1);
-                    }
-                    else {
+                    //if (!options.has(OP_OUTPUT_FILE_PREFIX)) { // if you read from stdin, provide output file prefix
+		    //    parser.printHelpOn(System.out);
+		    //    System.exit(1);
+                    //}
+                    //else {
                         samFiles = new ArrayList<String>();
                         samFiles.add("stdin");
-                    }
+                    //}
+                }
+
+                int nrBootstraps = 0;
+                if (options.has(OP_NUMBER_BOOTSTRAPS)) {
+                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
+                }
+                int confidenceValue = 95;
+                if (options.has(OP_CONFIDENCE_VALUE)) {
+                    confidenceValue = (int) options.valueOf(OP_CONFIDENCE_VALUE);
                 }
 
                 /*
@@ -110,13 +137,13 @@ public class Startup {
 							new FileInputStream(options.valueOf(OP_CLUSTERS_FILE).toString()));
 			EmUtils.synchronizeClustersWithIsoforms(clusters, isoforms);
 		}
-        int polyALength = -1;
+                int polyALength = -1;
 		if (options.has(OP_POLYA)) {
-            polyALength = (Integer) options.valueOf(OP_POLYA);
+                    polyALength = (Integer) options.valueOf(OP_POLYA);
 			if (fragmentLengthMean > 0 && polyALength > fragmentLengthMean) {
 				polyALength = (int)Math.ceil(fragmentLengthMean);
 			}
-            Utils.addFakePolyAToExons(isoforms, polyALength);
+                    Utils.addFakePolyAToExons(isoforms, polyALength);
 		}
 		System.out.println("Found " + isoforms.size() + " isoforms and "
 						+ clusters.size() + " genes");
@@ -195,61 +222,124 @@ public class Startup {
 				}
 
 				System.out.println("Parsing reads file... " + samReadsFile);
-				Map<String, Double> freq = flow.computeFpkms(EmUtils.getSamReader(samReadsFile));
+
+                                List<List<IsoformList>> clusters2 = flow.computeClusters(EmUtils.getSamReader(samReadsFile));
+                                // here we check how many isoformLists we have in reality after computing clusters
+                                int bootCount = 0;
+                                for (int ii = 0; ii < clusters2.size(); ii ++) {
+                                    for (int jj = 0; jj < clusters2.get(ii).size(); jj ++) {
+                                        ArrayIsoformList aiso = (ArrayIsoformList) (clusters2.get(ii).get(jj));
+                                        for (Map.Entry<String, ArrayList<Double>> entry : aiso.weightMap.entrySet()) {
+                                            bootCount += entry.getValue().size();
+                                        }
+                                    }
+                                }
+
+                                List<List<IsoformList>> new_clusters;
+
+                                for (int bootIteration = 0; bootIteration <= nrBootstraps; bootIteration ++) {  // MAIN BOOTSTRAP FOR LOOP
+                                if (bootIteration > 0) {
+                                    new_clusters = doBootstrapClusters(clusters2, bootCount);
+                                }
+                                else {
+                                    new_clusters = clusters2;
+                                }
+
+
+				Map<String, Double> freq = flow.computeFpkms(new_clusters);
 				EmUtils.addMissingIds(freq, isoforms.idIterator());
 
-                                Map<String, Double> tpms = EmUtils.computeTpms(freq);                                
+                                Map<String, Double> tpms = EmUtils.computeTpms(freq);                  
+                                Map<String, Double> ecpms = EmUtils.computeEcpms(freq);
 
-				String outputFileNamePrefix =  null;
-				if (options.has(OP_OUTPUT_FILE_PREFIX)) {
-					outputFileNamePrefix = options.valueOf(OP_OUTPUT_FILE_PREFIX).toString();
-				} else {
-					outputFileNamePrefix = samReadsFile.replace(".sam.gz", "");
-					outputFileNamePrefix = outputFileNamePrefix.replace(".sam", "");
-					if (readLimit != -1) {
-						outputFileNamePrefix += "_" + readLimit;
-					}
-				}
+                                // get the basename of the .sam reads file
+                                String namePrefix = null;
+                                namePrefix = samReadsFile.replace(".sam.gz", "");
+                                namePrefix = namePrefix.replace(".sam", "");
+                                int indexOfLastSlash = namePrefix.lastIndexOf("/");
+                                namePrefix = namePrefix.substring(indexOfLastSlash + 1);
+
+                                String isoOutputFileName;
+                                String isoTpmFileName;
+                                String isoEcpmFileName;
+
+                                String geneOutputFileName;
+                                String geneTpmFileName;
+                                String geneEcpmFileName;
+
+                                // bootstrap confidence intervals filenames
+                                String isoOutputCiFileName;
+                                String isoTpmCiFileName;
+
+                                String geneOutputCiFileName;
+                                String geneTpmCiFileName;
+                                // ----------------------------------------
+
+
+                                String isoCommonName;
+                                String geneCommonName;
+
+                                if (bootIteration == 0) {
+                                    isoCommonName = oDir + "/" + namePrefix + "/output/Isoforms/";
+                                    geneCommonName = oDir + "/" + namePrefix + "/output/Genes/";
+                                }
+                                else { // this is a simple bootstrap iteration
+                                    isoCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Isoforms/";
+                                    geneCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Genes/";
+                                }
+                                isoOutputFileName = isoCommonName + "iso_fpkm_estimates";
+                                isoTpmFileName = isoCommonName + "iso_tpm_estimates";
+                                isoEcpmFileName = isoCommonName + "iso_ecpm_estimates";
+
+                                geneOutputFileName = geneCommonName + "gene_fpkm_estimates";
+                                geneTpmFileName = geneCommonName + "gene_tpm_estimates";
+                                geneEcpmFileName = geneCommonName + "gene_ecpm_estimates";
+
 
                                 // writing fpkms for isoforms
-				String isoOutputFileName = outputFileNamePrefix + ".iso_fpkm_estimates";
 				System.out.println("Writing isoform FPKMs to "
 								+ isoOutputFileName);
 				writeValues(sortEntriesDesc(freq), isoOutputFileName);
 
                                 // writing tmps for isoforms
-				String isoTpmFileName = outputFileNamePrefix + ".iso_tpm_estimates";
 				System.out.println("Writing isoform TPMs to "
 								+ isoTpmFileName);
 				writeValues(sortEntriesDesc(tpms), isoTpmFileName);
+
+                                // writing ecpms for isoforms
+				System.out.println("Writing isoform ECPMs to "
+								+ isoEcpmFileName);
+				writeValues(sortEntriesDesc(ecpms), isoEcpmFileName);
+
                                 //----------------------------------
 				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
-                                Map<String, Double> fpkm_weigthedGeneLengths= Utils.fpkmWeigthedGeneLengths(freq,isoforms, isoformToClusterMap);
+                                Map<String, Double> fpkm_weigthedGeneLengths = Utils.fpkmWeigthedGeneLengths(freq,isoforms, isoformToClusterMap);
 				freq = Utils.groupByCluster(freq, isoformToClusterMap);
 				EmUtils.addMissingIds(freq, clusters.idIterator());
 
                                 tpms = EmUtils.computeTpms(freq);
+                                ecpms = EmUtils.computeTpms(freq);
+
                                 // writing fpkms for genes
-				String geneOutputFileName = outputFileNamePrefix + ".gene_fpkm_estimates";
 				System.out.println("Writing gene FPKMs to "
 								+ geneOutputFileName);
 				writeValues(sortEntriesDesc(freq), geneOutputFileName);
+
                                 // writing tpms for genes
-				String geneTpmFileName = outputFileNamePrefix + ".gene_tpm_estimates";
 				System.out.println("Writing gene TPMs to "
 								+ geneTpmFileName);
 				writeValues(sortEntriesDesc(tpms), geneTpmFileName);
 
-
-
-//				System.out.println("Writing FPKM weightd gene lengths to "
-//								+ "fpkm_whgted_avg_gene_lengths.txt");
-//				writeValues(sortEntriesDesc(fpkm_weigthedGeneLengths), "fpkm_whgted_avg_gene_lengths.txt");
+                                // writing ecpms for genes
+				System.out.println("Writing gene ECPMs to "
+								+ geneEcpmFileName);
+				writeValues(sortEntriesDesc(ecpms), geneEcpmFileName);
 
 				timer.stop();
 				log.debug("Total time " + timer.getGlobalTime());
 				System.out.printf("Done. (%.2fs)\n",
 								timer.getGlobalTime() / 1000.0);
+                                }
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
@@ -320,6 +410,55 @@ public class Startup {
 						+ occupiedMemBytes + " bytes)");
 		System.out.println("=================================");
 	}
+
+
+
+        public static List<List<IsoformList>> doBootstrapClusters(List<List<IsoformList>> clusters, int bootCount){
+            List<List<IsoformList>> new_clusters = new ArrayList<List<IsoformList>>();
+            int[] count = new int[bootCount];
+            // initialize count array
+            for (int j = 0; j < count.length; j++)
+                count[j] = 0;
+            // generate number of copies for each read
+            for (int j = 0; j < count.length; j++)
+                count[generateRandomNber(0, bootCount - 1)]++;
+            // Now it is time to recompute the weights for each IsoformList
+            int bootCounter = 0;
+            for (int ii = 0; ii < clusters.size(); ii ++) {
+                ArrayList<IsoformList> super_igor_isoform_list = new ArrayList<IsoformList>();
+                for (int jj = 0; jj < clusters.get(ii).size(); jj ++) {
+                    // This is the actual bootstrap
+                    ArrayIsoformList aiso = (ArrayIsoformList) (clusters.get(ii).get(jj));
+                    ArrayIsoformList aiso2 = new ArrayIsoformList(aiso);
+                    HashMap<String, Double> aiosMap = new HashMap<String, Double>();
+                    for (Map.Entry<String, ArrayList<Double>> entry : aiso2.weightMap.entrySet()) {
+                        double sumBootWeight = 0;
+                        for (int kk = 0; kk < entry.getValue().size(); kk ++) {
+                            sumBootWeight += count[bootCounter++] * entry.getValue().get(kk);
+                        }
+                        aiosMap.put(entry.getKey(), sumBootWeight);
+                    }
+                    // Now we have to recompute the weights for each entry of the IsoformList by normalization 
+                    double sumWeight = 0;
+                    for (Map.Entry<String, Double> entry : aiosMap.entrySet()) {
+                        sumWeight += entry.getValue();
+                    }
+                    for (Map.Entry<String, Double> entry : aiosMap.entrySet()) {
+                        aiosMap.put(entry.getKey(), entry.getValue() / sumWeight); // Now I normalized everything in the IsoformList
+                    }
+                    for (IsoformList.Entry e : aiso2.entrySet()) {
+                        String entryName = e.getKey();
+                        double newWeight = aiosMap.get(entryName);
+                        e.setValue(newWeight);
+                    }
+                    super_igor_isoform_list.add(aiso2);
+                }
+                new_clusters.add(super_igor_isoform_list);
+            }
+            return new_clusters;
+        }
+
+
 
 // sahar
 // method not used and makes calls to methods whose interface will change; deprecate.

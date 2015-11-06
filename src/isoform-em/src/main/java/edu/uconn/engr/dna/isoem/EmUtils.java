@@ -114,6 +114,14 @@ public class EmUtils extends edu.uconn.engr.dna.util.EmUtils {
 	}
 
 
+	public static Map<String, Double> computeEcpms(Map<String, Double> frequencies) {
+		Map<String, Double> ecpms = new HashMap<String, Double>();
+                for (Map.Entry<String, Double> entry: frequencies.entrySet()) {
+                    double ecpm = entry.getValue() * 1000000; // tpm = fpkm * 10^6 / (sum of fpkms)
+                    ecpms.put(entry.getKey(), ecpm);
+                }
+                return ecpms;
+	}
 
 
 }

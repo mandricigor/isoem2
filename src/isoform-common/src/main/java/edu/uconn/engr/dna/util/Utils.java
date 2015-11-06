@@ -8,6 +8,7 @@ import edu.uconn.engr.dna.format.Isoforms;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -558,6 +559,13 @@ public class Utils {
 
 	public static <K, V> void writeValues(Collection<Map.Entry<K, V>> entries,
 			String outputFileName) throws IOException {
+                String dirName = null;
+                int lastIndexOfSlash = outputFileName.lastIndexOf("/");
+                if (lastIndexOfSlash != -1) {
+                    dirName = outputFileName.substring(0, lastIndexOfSlash);
+                }
+                File f = new File(dirName);
+                f.mkdirs();
 		Writer writer = new PrintWriter(outputFileName);
 		for (Map.Entry<?, ?> entry : entries) {
 			writer.write(String.valueOf(entry.getKey()));
