@@ -1,7 +1,7 @@
 sample
 sample.sh
 bin/isoviz
-lib
+lib/*
 README-SAMPLE.TXT
 igor.sh
 old_isoem.txt

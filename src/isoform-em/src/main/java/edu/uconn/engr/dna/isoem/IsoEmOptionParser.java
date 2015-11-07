@@ -32,7 +32,7 @@ public class IsoEmOptionParser extends OptionParser {
   	public static final String OP_OUTPUT_DIR = "o";
   	public static final String OP_OUTPUT_FILE_PREFIX = "O";
         public static final String OP_NUMBER_BOOTSTRAPS = "B"; // how many bootstraps to do if any
-        public static final String OP_CONFIDENCE_VALUE = "C"; // confidence intervals
+        public static final String OP_CONFIDENCE_VALUE = "C"; // confidence intervals; percent
 
 
 	public IsoEmOptionParser() {

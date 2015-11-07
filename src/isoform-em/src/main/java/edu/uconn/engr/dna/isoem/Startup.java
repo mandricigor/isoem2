@@ -16,7 +16,9 @@ import java.util.*;
 
 import static edu.uconn.engr.dna.isoem.IsoEmOptionParser.*;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesDesc;
+import static edu.uconn.engr.dna.util.Utils.sortEntriesById;
 import static edu.uconn.engr.dna.util.Utils.writeValues;
+//import static edu.uconn.engr.dna.util.Utils.createTarGZ;
 
 /**
  * Entry point of the EM algorithm: reads SAM input, applies EM, outputs
@@ -64,6 +66,8 @@ public class Startup {
 			return;
 		}
 
+                ConfidenceIntervalCalculator cicalc = null;
+
                 if (!options.has(OP_OUTPUT_DIR)) { // if you read from stdin, provide output file prefix
 		    parser.printHelpOn(System.out);
 		    System.exit(1);
@@ -85,12 +89,14 @@ public class Startup {
                 }
 
                 int nrBootstraps = 0;
-                if (options.has(OP_NUMBER_BOOTSTRAPS)) {
-                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
-                }
                 int confidenceValue = 95;
                 if (options.has(OP_CONFIDENCE_VALUE)) {
+                    nrBootstraps = 200; // Just hardcoded, so what?
                     confidenceValue = (int) options.valueOf(OP_CONFIDENCE_VALUE);
+                    cicalc = new ConfidenceIntervalCalculator(confidenceValue);
+                }
+                else if (options.has(OP_NUMBER_BOOTSTRAPS)) {
+                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
                 }
 
                 /*
@@ -195,6 +201,7 @@ public class Startup {
 		boolean runUniq = options.has(OP_UNIQ);
 		boolean reportCounts = options.has(OP_COUNT);
 		for (int i = 0; i < n; ++i) {
+                        String namePrefix = null;
 			try {
 				String samReadsFile = samFiles.get(i);
 				boolean matePairs = options.has(IsoEmOptionParser.OP_MATE_PAIRS);
@@ -248,12 +255,18 @@ public class Startup {
 
 				Map<String, Double> freq = flow.computeFpkms(new_clusters);
 				EmUtils.addMissingIds(freq, isoforms.idIterator());
-
                                 Map<String, Double> tpms = EmUtils.computeTpms(freq);                  
                                 Map<String, Double> ecpms = EmUtils.computeEcpms(freq);
 
+
+                                if (options.has(OP_CONFIDENCE_VALUE)) {
+                                    cicalc.updateIsoFpkm(freq);
+                                    cicalc.updateIsoTpm(tpms);
+                                    cicalc.updateIsoEcpm(ecpms);
+                                }
+
+
                                 // get the basename of the .sam reads file
-                                String namePrefix = null;
                                 namePrefix = samReadsFile.replace(".sam.gz", "");
                                 namePrefix = namePrefix.replace(".sam", "");
                                 int indexOfLastSlash = namePrefix.lastIndexOf("/");
@@ -280,12 +293,12 @@ public class Startup {
                                 String geneCommonName;
 
                                 if (bootIteration == 0) {
-                                    isoCommonName = oDir + "/" + namePrefix + "/output/Isoforms/";
-                                    geneCommonName = oDir + "/" + namePrefix + "/output/Genes/";
+                                    isoCommonName = oDir + "/output/" + namePrefix + "/Isoforms/";
+                                    geneCommonName = oDir + "/output/" + namePrefix + "/Genes/";
                                 }
                                 else { // this is a simple bootstrap iteration
-                                    isoCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Isoforms/";
-                                    geneCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Genes/";
+                                    isoCommonName = oDir + "/bootstrap/" + namePrefix + "/experiment_" + bootIteration + "/Isoforms/";
+                                    geneCommonName = oDir + "/bootstrap/" + namePrefix + "/experiment_" + bootIteration + "/Genes/";
                                 }
                                 isoOutputFileName = isoCommonName + "iso_fpkm_estimates";
                                 isoTpmFileName = isoCommonName + "iso_tpm_estimates";
@@ -299,17 +312,17 @@ public class Startup {
                                 // writing fpkms for isoforms
 				System.out.println("Writing isoform FPKMs to "
 								+ isoOutputFileName);
-				writeValues(sortEntriesDesc(freq), isoOutputFileName);
+				writeValues(sortEntriesById(freq), isoOutputFileName);
 
                                 // writing tmps for isoforms
 				System.out.println("Writing isoform TPMs to "
 								+ isoTpmFileName);
-				writeValues(sortEntriesDesc(tpms), isoTpmFileName);
+				writeValues(sortEntriesById(tpms), isoTpmFileName);
 
                                 // writing ecpms for isoforms
 				System.out.println("Writing isoform ECPMs to "
 								+ isoEcpmFileName);
-				writeValues(sortEntriesDesc(ecpms), isoEcpmFileName);
+				writeValues(sortEntriesById(ecpms), isoEcpmFileName);
 
                                 //----------------------------------
 				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
@@ -320,29 +333,43 @@ public class Startup {
                                 tpms = EmUtils.computeTpms(freq);
                                 ecpms = EmUtils.computeTpms(freq);
 
+                                if (options.has(OP_CONFIDENCE_VALUE)) {
+                                    cicalc.updateGeneFpkm(freq);
+                                    cicalc.updateGeneTpm(tpms);
+                                    cicalc.updateGeneEcpm(ecpms);
+                                    cicalc.report();
+                                }
+
                                 // writing fpkms for genes
 				System.out.println("Writing gene FPKMs to "
 								+ geneOutputFileName);
-				writeValues(sortEntriesDesc(freq), geneOutputFileName);
+				writeValues(sortEntriesById(freq), geneOutputFileName);
 
                                 // writing tpms for genes
 				System.out.println("Writing gene TPMs to "
 								+ geneTpmFileName);
-				writeValues(sortEntriesDesc(tpms), geneTpmFileName);
+				writeValues(sortEntriesById(tpms), geneTpmFileName);
 
                                 // writing ecpms for genes
 				System.out.println("Writing gene ECPMs to "
 								+ geneEcpmFileName);
-				writeValues(sortEntriesDesc(ecpms), geneEcpmFileName);
+				writeValues(sortEntriesById(ecpms), geneEcpmFileName);
 
 				timer.stop();
 				log.debug("Total time " + timer.getGlobalTime());
 				System.out.printf("Done. (%.2fs)\n",
 								timer.getGlobalTime() / 1000.0);
                                 }
+                            // now we have to compute the confidence intervals if any and to reset the cicalc
+                            if (options.has(OP_CONFIDENCE_VALUE)) {
+                                String dirname = oDir + "/output/" + namePrefix + "/confidence/";
+                                cicalc.writeValues(dirname);
+                                cicalc.reset();
+                            }
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
+                    //createTarGZ(oDir + "/bootstrap/", "bootstrap.tar.gz");
 		}
 	}
 

@@ -11,6 +11,16 @@ import java.io.Writer;
 import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.BufferedOutputStream;
+
+//import org.apache.commons.io.IOUtils;
+//import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+//import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+//import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+
 
 public class Utils {
 
@@ -557,6 +567,23 @@ public class Utils {
 		return entries;
 	}
 
+
+	public static List<Map.Entry<String, Double>> sortEntriesById(Map<String, Double> freq) {
+		List<Map.Entry<String, Double>> entries = new ArrayList<Map.Entry<String, Double>>(
+				freq.entrySet());
+		Collections.sort(entries, new Comparator<Map.Entry<String, Double>>() {
+
+			@Override
+			public int compare(Map.Entry<String, Double> o1,
+					Map.Entry<String, Double> o2) {
+                                return o1.getKey().compareTo(o2.getKey());
+				//return o2.getValue().compareTo(o1.getValue());
+			}
+		});
+		return entries;
+	}
+
+
 	public static <K, V> void writeValues(Collection<Map.Entry<K, V>> entries,
 			String outputFileName) throws IOException {
                 String dirName = null;
@@ -575,6 +602,52 @@ public class Utils {
 		}
 		writer.close();
 	}
+
+        /*
+        public static void createTarGZ(String dirPath, String tarGzPath) throws FileNotFoundException, IOException {
+            FileOutputStream fOut = null;
+            BufferedOutputStream bOut = null;
+            GzipCompressorOutputStream gzOut = null;
+            TarArchiveOutputStream tOut = null;
+            try{
+                fOut = new FileOutputStream(new File(tarGzPath));
+                bOut = new BufferedOutputStream(fOut);
+                gzOut = new GzipCompressorOutputStream(bOut);
+                tOut = new TarArchiveOutputStream(gzOut);
+                addFileToTarGz(tOut, dirPath, "");
+            } finally {
+                tOut.finish();
+                tOut.close();
+                gzOut.close();
+                bOut.close();
+                fOut.close();
+            }
+
+        }
+
+
+        private static void addFileToTarGz(TarArchiveOutputStream tOut, String path, String base) throws IOException {
+            File f = new File(path);
+            System.out.println(f.exists());
+            String entryName = base + f.getName();
+            TarArchiveEntry tarEntry = new TarArchiveEntry(f, entryName);
+            tOut.putArchiveEntry(tarEntry);
+
+            if (f.isFile()) {
+                IOUtils.copy(new FileInputStream(f), tOut);
+                tOut.closeArchiveEntry();
+            } else {
+                tOut.closeArchiveEntry();
+                File[] children = f.listFiles();
+                if (children != null){
+                    for (File child : children) {
+                        //System.out.println(child.getName());
+                        addFileToTarGz(tOut, child.getAbsolutePath(), entryName + "/");
+                    }
+                }
+            }
+        }
+        */
 
 	public static <T> void compact(List<T> list) {
 		int j = 0;
