@@ -18,7 +18,9 @@ import static edu.uconn.engr.dna.isoem.IsoEmOptionParser.*;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesDesc;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesById;
 import static edu.uconn.engr.dna.util.Utils.writeValues;
-//import static edu.uconn.engr.dna.util.Utils.createTarGZ;
+import static edu.uconn.engr.dna.util.Utils.createTarGZ;
+import static edu.uconn.engr.dna.util.Utils.removeDir;
+
 
 /**
  * Entry point of the EM algorithm: reads SAM input, applies EM, outputs
@@ -348,7 +350,6 @@ public class Startup {
                                     cicalc.updateGeneFpkm(freq);
                                     cicalc.updateGeneTpm(tpms);
                                     cicalc.updateGeneEcpm(ecpms);
-                                    cicalc.report();
                                 }
 
                                 // writing fpkms for genes
@@ -380,7 +381,8 @@ public class Startup {
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
-                    //createTarGZ(oDir + "/bootstrap/", "bootstrap.tar.gz");
+                    createTarGZ(oDir + "/bootstrap/", oDir + "/bootstrap.tar.gz");
+                    removeDir(oDir + "/bootstrap/");
 		}
 	}
 

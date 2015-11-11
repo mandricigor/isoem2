@@ -16,10 +16,10 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.BufferedOutputStream;
 
-//import org.apache.commons.io.IOUtils;
-//import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-//import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-//import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 
 public class Utils {
@@ -603,7 +603,39 @@ public class Utils {
 		writer.close();
 	}
 
-        /*
+
+        public static void removeDir(String dirName) {
+            File directory = new File(dirName);
+            try {
+                deleteFile(directory);
+            } catch(Exception e) {
+                System.err.println("Could not remove safely directory: " + dirName);
+            }
+        }
+
+
+        private static void deleteFile(File file) {
+    	    if (file.isDirectory()) {
+    	        if (file.list().length == 0) {
+    	            file.delete();
+    	        }
+                else {
+                    String files[] = file.list();
+                    for (String temp : files) {
+                        File fileDelete = new File(file, temp);
+                        deleteFile(fileDelete);
+                    }
+                    if (file.list().length == 0) {
+                        file.delete();
+                    }
+    	        }
+    	    }
+            else {
+    	        file.delete();
+    	    }
+        }
+
+
         public static void createTarGZ(String dirPath, String tarGzPath) throws FileNotFoundException, IOException {
             FileOutputStream fOut = null;
             BufferedOutputStream bOut = null;
@@ -628,7 +660,6 @@ public class Utils {
 
         private static void addFileToTarGz(TarArchiveOutputStream tOut, String path, String base) throws IOException {
             File f = new File(path);
-            System.out.println(f.exists());
             String entryName = base + f.getName();
             TarArchiveEntry tarEntry = new TarArchiveEntry(f, entryName);
             tOut.putArchiveEntry(tarEntry);
@@ -641,13 +672,12 @@ public class Utils {
                 File[] children = f.listFiles();
                 if (children != null){
                     for (File child : children) {
-                        //System.out.println(child.getName());
                         addFileToTarGz(tOut, child.getAbsolutePath(), entryName + "/");
                     }
                 }
             }
         }
-        */
+
 
 	public static <T> void compact(List<T> list) {
 		int j = 0;

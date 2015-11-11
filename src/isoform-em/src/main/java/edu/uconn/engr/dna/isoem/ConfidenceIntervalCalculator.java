@@ -94,18 +94,6 @@ public class ConfidenceIntervalCalculator {
         private Map<String, IntervalTracker> iso_tpm;
         private Map<String, IntervalTracker> iso_ecpm;
 
-
-
-        public void report() {
-            System.out.println(gene_fpkm.size());
-            System.out.println(gene_tpm.size());
-            System.out.println(gene_ecpm.size());
-            System.out.println(iso_fpkm.size());
-            System.out.println(iso_tpm.size());
-            System.out.println(iso_ecpm.size());
-        }
-
-
         private void initializeStorage(Map<String, IntervalTracker> storage, Map<String, Double> freq) {
             int confidence_rank = (int) Math.ceil(100.0 * (1.0 - 0.01 * confidence));
             for (Map.Entry<String, Double> entry: freq.entrySet()) {
