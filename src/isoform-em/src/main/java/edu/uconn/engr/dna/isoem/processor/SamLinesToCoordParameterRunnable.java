@@ -93,7 +93,8 @@ public class SamLinesToCoordParameterRunnable implements ParameterRunnable<List<
 			}
 			try {
 				tokenizer.setLine(line);
-				tokenizer.skipNext(); // skip read name
+				//tokenizer.skipNext(); // do not skip read name
+                                String readName = tokenizer.nextString();
 				int flags = tokenizer.nextInt();
 				String referenceSequenceName = tokenizer.nextString(); // (chromosome)
 				if ("*".equals(referenceSequenceName)) {
@@ -164,7 +165,7 @@ public class SamLinesToCoordParameterRunnable implements ParameterRunnable<List<
 					if (mate == null) // this read expects a mate
 					{
 						readIdMap.put(alignmentStart, firstReadInPair,
-										new ReadInfo(referenceSequenceName, cigarString,
+										new ReadInfo(readName, referenceSequenceName, cigarString,
 										qualityScoreWeight, biasCorrectedWeight, flags));
 					} else {
 						qualityScoreWeight *= mate.getQuality();
@@ -184,11 +185,11 @@ public class SamLinesToCoordParameterRunnable implements ParameterRunnable<List<
 
 							biasCorrectedWeight = (biasCorrectedWeight + mate.getBiasCorrectedWeight()) / 2;
 							if (alignmentStart < matePosition) {
-								id = new PairAlignmentId(na, alignmentOnPositiveStrand,
+								id = new PairAlignmentId(na, readName, alignmentOnPositiveStrand,
 												alignmentStart, firstReadOnPositiveStrand,
 												qualityScoreWeight, biasCorrectedWeight);
 							} else {
-								id = new PairAlignmentId(na, mateOnPositiveStrand,
+								id = new PairAlignmentId(na, readName, mateOnPositiveStrand,
 												matePosition, firstReadOnPositiveStrand,
 												qualityScoreWeight, biasCorrectedWeight);
 							}
@@ -210,7 +211,7 @@ public class SamLinesToCoordParameterRunnable implements ParameterRunnable<List<
 						readStarts.set(na);
 					}
 					boolean alignmentOnPositiveStrand = isAlignmentOnPositiveStrand(flags);
-					AlignmentId id = new AlignmentId(na++, alignmentStart,
+					AlignmentId id = new AlignmentId(na++, readName, alignmentStart,
 									alignmentOnPositiveStrand, qualityScoreWeight, biasCorrectedWeight);
 					List<Coord> coordinates = getCoordinates(referenceSequenceName);
 					addCoords(alignmentStart, id, cigarString, coordinates);

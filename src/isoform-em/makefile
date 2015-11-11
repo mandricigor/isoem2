@@ -6,7 +6,7 @@ preclean:
 	
 compile:
 	mkdir bin 
-	javac -cp "../../lib/junit-4.8.1.jar:../../lib/jopt-simple-3.2.jar:../../lib/log4j-1.2.14.jar:../../lib/commons-compress-1.9.jar:../../lib/commons-io-2.4.jar:../../lib/isoform-common-1.0.jar:../../lib/isoform-accuracy-1.0.jar" \
+	javac -cp "../../lib/junit-4.8.1.jar:../../lib/jopt-simple-3.2.jar:../../lib/log4j-1.2.14.jar:../../lib/commons-compress-1.10.jar:../../lib/commons-io-2.4.jar:../../lib/isoform-common-1.0.jar:../../lib/isoform-accuracy-1.0.jar" \
 	-d bin \
 	src/main/java/edu/uconn/engr/dna/*/*.java src/main/java/edu/uconn/engr/dna/*/*/*.java 
 

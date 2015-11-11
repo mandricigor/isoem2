@@ -19,6 +19,7 @@ package edu.uconn.engr.dna.isoem;
 import java.util.NoSuchElementException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -36,14 +37,28 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 	private String[] name;
 	private double[] weight;
 	private int h;
-        public Map<String, ArrayList<Double>> weightMap;
+        //public List<Map<String, Double>> readAlignmentMapList;
+        //public List<String> readNames;
+        public String readName;
+        //public Map<String, ArrayList<Double>> weightMap;
 
 	public ArrayIsoformList(String[] name, double[] weight) {
 		assert (name.length == weight.length);
 		this.name = name;
 		this.weight = weight;
 		this.size = name.length;
-                this.weightMap = new HashMap<String, ArrayList<Double>>();
+                //readAlignmentMapList = new ArrayList<Map<String, Double>>();
+                // put the first readAlignmentMap to the readAlignmentList;
+                //Map<String, Double> readAlignmentMap = new HashMap<String, Double>();
+                //for (int i = 0; i < name.length; i ++) {
+                //    readAlignmentMap.put(name[i], weight[i]);
+                //}
+                //if (readAlignmentMap.size() > 0) {
+                //    readAlignmentMapList.add(readAlignmentMap);
+                //}
+                //readNames = new ArrayList<String>();
+                readName = null;
+                //this.weightMap = new HashMap<String, ArrayList<Double>>();
 	}
 
 
@@ -55,12 +70,13 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
             System.arraycopy(another.getName(), 0, this.name, 0, another.getName().length);
             this.weight = new double[another.getWeight().length];
             System.arraycopy(another.getWeight(), 0, this.weight, 0, another.getWeight().length);
-            this.weightMap = new HashMap<String, ArrayList<Double>>();
-            for (Map.Entry<String, ArrayList<Double>> entry: another.weightMap.entrySet()) {
-                ArrayList<Double> weights = entry.getValue();
-                ArrayList<Double> new_weights = new ArrayList<Double>(weights);
-                this.weightMap.put(entry.getKey(), new_weights);
-            }
+            this.readName = another.readName;
+            //this.weightMap = new HashMap<String, ArrayList<Double>>();
+            //for (Map.Entry<String, ArrayList<Double>> entry: another.weightMap.entrySet()) {
+            //    ArrayList<Double> weights = entry.getValue();
+            //    ArrayList<Double> new_weights = new ArrayList<Double>(weights);
+            //    this.weightMap.put(entry.getKey(), new_weights);
+            //}
             this.h = another.h;
         }
 
@@ -101,7 +117,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 		h = 0;
 	}
 
-
+        /*
         public void reuniteMaps(IsoformList isoformList) {
             ArrayIsoformList aiso = (ArrayIsoformList) isoformList;
             for (Map.Entry<String, ArrayList<Double>> entry : aiso.weightMap.entrySet()) {
@@ -116,12 +132,15 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
                 }
             }
         }
-
+        */
 
 
 	@Override
 	public void reunite(IsoformList isoformList) {
 		ArrayIsoformList a = getArrayIsoformList(isoformList);
+                // Igor merges the two lists
+                //readNames.addAll(a.readNames);
+                //readAlignmentMapList.addAll(a.readAlignmentMapList);
 		int i = 0, j = 0, k = 0;
 		String[] rname = name;
 		double[] rweight = weight;
@@ -173,7 +192,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 		size = k;
 		fillNullsOrAdjustSize();
 		h = 0;
-                reuniteMaps(isoformList);
+                //reuniteMaps(isoformList);
 	}
 
 	@Override
@@ -406,6 +425,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 			sb.append("; ");
 		}
 		sb.append("}");
+                sb.append(" " + readName + " " + multiplicity);
 		return sb.toString();
 	}
 

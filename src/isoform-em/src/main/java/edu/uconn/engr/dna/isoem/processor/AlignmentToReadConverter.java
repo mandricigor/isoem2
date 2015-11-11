@@ -87,6 +87,18 @@ public class AlignmentToReadConverter implements ParameterRunnable<IsoformListsB
 //                        System.out.println("in trailing current list not empty");
 //                        System.out.println("totalMultiplicity/counter = "+totalMultiplicity+"/"+counter+" = "+totalMultiplicity/counter);
 		}
+
+
+                //for (int i = 0; i < result.size(); i ++) {
+                //    ArrayIsoformList aiso = (ArrayIsoformList) result.get(i);
+                //    if (aiso.readNames.get(0).equals("4WO8U:2237:550")) {
+                //        System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+                //        System.out.println(result.get(i));
+                //        System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+                //    }
+                //}
+
+
 		synchronized (lock) {
 			totalReads += result.size(); //item.getReadStarts().cardinality();
 		}

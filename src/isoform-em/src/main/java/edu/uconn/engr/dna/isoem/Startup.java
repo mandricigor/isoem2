@@ -99,6 +99,10 @@ public class Startup {
                     nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
                 }
 
+                Map<String, Integer> multiplicities = null;
+                List<String> bootArray = null;
+
+
                 /*
 		if (!options.has(OP_GTF) || samFiles.size() < 1 || options.has(OP_HELP)) {
 			parser.printHelpOn(System.out);
@@ -232,21 +236,28 @@ public class Startup {
 
                                 List<List<IsoformList>> clusters2 = flow.computeClusters(EmUtils.getSamReader(samReadsFile));
                                 // here we check how many isoformLists we have in reality after computing clusters
+                                multiplicities = new HashMap<String, Integer>();
+                                bootArray = new ArrayList<String>();
                                 int bootCount = 0;
                                 for (int ii = 0; ii < clusters2.size(); ii ++) {
                                     for (int jj = 0; jj < clusters2.get(ii).size(); jj ++) {
                                         ArrayIsoformList aiso = (ArrayIsoformList) (clusters2.get(ii).get(jj));
-                                        for (Map.Entry<String, ArrayList<Double>> entry : aiso.weightMap.entrySet()) {
-                                            bootCount += entry.getValue().size();
+                                        bootCount += aiso.getMultiplicity();
+                                        multiplicities.put(aiso.readName, (int) aiso.getMultiplicity());
+                                        for (int pp = 0; pp < aiso.getMultiplicity(); pp ++) {
+                                            bootArray.add(aiso.readName);
                                         }
                                     }
                                 }
+
+                                System.out.println("this is bootcount: " + bootCount);
+                                System.out.println("this is bootarray size: " + bootArray.size());
 
                                 List<List<IsoformList>> new_clusters;
 
                                 for (int bootIteration = 0; bootIteration <= nrBootstraps; bootIteration ++) {  // MAIN BOOTSTRAP FOR LOOP
                                 if (bootIteration > 0) {
-                                    new_clusters = doBootstrapClusters(clusters2, bootCount);
+                                    new_clusters = doBootstrapClusters(clusters2, bootCount, multiplicities, bootArray);
                                 }
                                 else {
                                     new_clusters = clusters2;
@@ -439,7 +450,38 @@ public class Startup {
 	}
 
 
+        public static List<List<IsoformList>> doBootstrapClusters(List<List<IsoformList>> clusters, int bCount, Map<String, Integer> m, List<String> bootArray) {
+            // map m stands for multiplicities of each read
+            Map<String, Integer> bootMultiplicities = new HashMap<String, Integer>();
+            for (Map.Entry<String, Integer> entry: m.entrySet()) {
+                bootMultiplicities.put(entry.getKey(), 0);
+            }
+            for (int k = 0; k < bCount; k ++) {
+                int p = generateRandomNber(0, bCount - 1);
+                String pickedRead = bootArray.get(p);
+                int currentCount = bootMultiplicities.get(pickedRead);
+                bootMultiplicities.put(pickedRead, currentCount + 1);
+            }
+            List<List<IsoformList>> new_clusters = new ArrayList<List<IsoformList>>();
+            for (int ii = 0; ii < clusters.size(); ii ++) {
+                ArrayList<IsoformList> super_igor_isoform_list = new ArrayList<IsoformList>();
+                for (int jj = 0; jj < clusters.get(ii).size(); jj ++) {
+                    ArrayIsoformList aiso = (ArrayIsoformList) (clusters.get(ii).get(jj));
+                    String readName = aiso.readName;
+                    if (bootMultiplicities.get(readName) > 0) {
+                        ArrayIsoformList new_aiso = new ArrayIsoformList(aiso);
+                        super_igor_isoform_list.add(new_aiso);
+                    }
+                }
+                new_clusters.add(super_igor_isoform_list);
+            }
+            return new_clusters;
+        }
 
+
+
+
+        /*
         public static List<List<IsoformList>> doBootstrapClusters(List<List<IsoformList>> clusters, int bootCount){
             List<List<IsoformList>> new_clusters = new ArrayList<List<IsoformList>>();
             int[] count = new int[bootCount];
@@ -484,7 +526,7 @@ public class Startup {
             }
             return new_clusters;
         }
-
+        */
 
 
 // sahar

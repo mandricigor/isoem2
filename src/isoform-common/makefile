@@ -6,7 +6,7 @@ preclean:
 	
 compile:
 	mkdir bin 
-	javac -cp "../../lib/junit-4.8.1.jar:../../lib/commons-compress-1.9.jar:../../lib/commons-io-2.4.jar" -d bin \
+	javac -cp "../../lib/junit-4.8.1.jar:../../lib/commons-compress-1.10.jar:../../lib/commons-io-2.4.jar" -d bin \
 	src/main/java/edu/uconn/engr/dna/*/*.java ../isoform-common/src/main/java/edu/uconn/engr/dna/*/*/*.java  \
 	src/main/java/edu/cornell/lassp/houle/RngPack/*.java 
 

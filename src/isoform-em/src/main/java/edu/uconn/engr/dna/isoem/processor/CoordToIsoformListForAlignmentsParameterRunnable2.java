@@ -91,7 +91,7 @@ public class CoordToIsoformListForAlignmentsParameterRunnable2
 			}
 		}
 		if (processor != null) {
-                        populateMaps(isoformsForAlignment);
+                        //populateMaps(isoformsForAlignment);
 			processor.run(new IsoformListsBean(isoformsForAlignment, fragmentLenForAlignment,
 							bean.getReadStarts()));
 		}
@@ -99,7 +99,7 @@ public class CoordToIsoformListForAlignmentsParameterRunnable2
 	}
 
 
-
+        /*
         private void populateMaps(IsoformList[] isos) {
             for (IsoformList iso: isos) {
                 ArrayIsoformList aiso = (ArrayIsoformList) iso;
@@ -115,6 +115,7 @@ public class CoordToIsoformListForAlignmentsParameterRunnable2
                 }
             }
         }
+        */
 
 
 	private void processSortedCoordinates(Coord2[] rc,
@@ -176,6 +177,7 @@ public class CoordToIsoformListForAlignmentsParameterRunnable2
 				return;
 			}
 			isoformsForAlignment[id] = handleAlignmentForSingleRead(isoList, alignmentId, coord.getEnd());
+                        ((ArrayIsoformList)isoformsForAlignment[id]).readName = alignmentId.getReadName(); // ATTENTION
 		} else {
 			IsoformList pairIsoformList;
 			if (null == (pairIsoformList = isoformsForAlignment[id])) {
@@ -203,6 +205,7 @@ public class CoordToIsoformListForAlignmentsParameterRunnable2
 						}
 					}
 				}
+                                ((ArrayIsoformList)isoList).readName = alignmentId.getReadName(); // ATTENTION
 				isoformsForAlignment[id] = isoList;
 			}
 		}

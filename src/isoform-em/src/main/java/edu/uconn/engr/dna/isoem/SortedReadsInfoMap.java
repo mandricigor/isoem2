@@ -107,15 +107,21 @@ public class SortedReadsInfoMap {
 		private final double quality;
 		private final double biasCorrectedWeight;
 		private final int flags;
+                private final String readName;
 
-		public ReadInfo(String refSeq, String cigar, double quality,
+		public ReadInfo(String readName, String refSeq, String cigar, double quality,
 						double biasCorrectedWeight, int flags) {
+                        this.readName = readName;
 			this.refSeq = refSeq;
 			this.cigar = cigar;
 			this.quality = quality;
 			this.biasCorrectedWeight = biasCorrectedWeight;
 			this.flags = flags;
 		}
+
+                public String getReadName() {
+                    return readName;
+                }
 
 		public double getBiasCorrectedWeight() {
 			return biasCorrectedWeight;

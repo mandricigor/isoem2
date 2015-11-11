@@ -95,7 +95,7 @@ public class SamLinesToCoordParameterRunnable2 implements ParameterRunnable<List
 							int pos = p.getFirst();
 							ReadInfo i = p.getSecond();
 							boolean alignmentOnPositiveStrand = isAlignmentOnPositiveStrand(i.getFlags());
-							addSingle(i.getRefSeq(), alignmentOnPositiveStrand, pos,
+							addSingle(i.getReadName(), i.getRefSeq(), alignmentOnPositiveStrand, pos,
 									i.getCigar(), i.getQuality(), i.getBiasCorrectedWeight());
 						}
 						readIdMap.clear();
@@ -109,7 +109,8 @@ public class SamLinesToCoordParameterRunnable2 implements ParameterRunnable<List
 			}
 			try {
 				tokenizer.setLine(line);
-				tokenizer.skipNext(); // skip read name
+				//tokenizer.skipNext(); // do not skip read name
+                                String readName = tokenizer.nextString();
 				int flags = tokenizer.nextInt();
 				String referenceSequenceName = tokenizer.nextString(); // (chromosome)
 				if ("*".equals(referenceSequenceName)) {
@@ -184,7 +185,7 @@ public class SamLinesToCoordParameterRunnable2 implements ParameterRunnable<List
 							readIdMap.remove(referenceSequenceName, matePosition, !firstReadInPair);
 					if (mate == null) { // this read expects a mate
 						readIdMap.put(alignmentStart, firstReadInPair,
-								new ReadInfo(referenceSequenceName, cigarString,
+								new ReadInfo(readName, referenceSequenceName, cigarString,
 								qualityScoreWeight, biasCorrectedWeight, flags));
 					} else {
 						// add pair
@@ -205,11 +206,11 @@ public class SamLinesToCoordParameterRunnable2 implements ParameterRunnable<List
 
 							biasCorrectedWeight = (biasCorrectedWeight + mate.getBiasCorrectedWeight()) / 2;
 							if (alignmentStart < matePosition) {
-								id = new PairAlignmentId(na, alignmentOnPositiveStrand,
+								id = new PairAlignmentId(na, readName, alignmentOnPositiveStrand,
 										alignmentStart, firstReadOnPositiveStrand,
 										qualityScoreWeight, biasCorrectedWeight);
 							} else {
-								id = new PairAlignmentId(na, mateOnPositiveStrand,
+								id = new PairAlignmentId(na, readName, mateOnPositiveStrand,
 										matePosition, firstReadOnPositiveStrand,
 										qualityScoreWeight, biasCorrectedWeight);
 							}
@@ -228,7 +229,7 @@ public class SamLinesToCoordParameterRunnable2 implements ParameterRunnable<List
 						readStarts.set(na);
 					}
 					boolean alignmentOnPositiveStrand = isAlignmentOnPositiveStrand(flags);
-					addSingle(referenceSequenceName, alignmentOnPositiveStrand, alignmentStart, cigarString,
+					addSingle(readName, referenceSequenceName, alignmentOnPositiveStrand, alignmentStart, cigarString,
 							qualityScoreWeight, biasCorrectedWeight);
 				}
 			} catch (RuntimeException e) {
@@ -238,13 +239,13 @@ public class SamLinesToCoordParameterRunnable2 implements ParameterRunnable<List
 		}
 	}
 
-	private void addSingle(String referenceSequenceName,
+	private void addSingle(String readName, String referenceSequenceName,
 			boolean alignmentOnPositiveStrand,
 			int alignmentStart,
 			String cigarString,
 			double qualityScoreWeight,
 			double biasCorrectedWeight) {
-		AlignmentId id = new AlignmentId(na++, alignmentStart,
+		AlignmentId id = new AlignmentId(na++, readName, alignmentStart,
 				alignmentOnPositiveStrand, qualityScoreWeight, biasCorrectedWeight);
 		List<Coord2> coordinates = getCoordinates(referenceSequenceName);
 		addCoords(alignmentStart, id, cigarString, coordinates);
