@@ -306,12 +306,12 @@ public class Startup {
                                 String geneCommonName;
 
                                 if (bootIteration == 0) {
-                                    isoCommonName = oDir + "/output/" + namePrefix + "/Isoforms/";
-                                    geneCommonName = oDir + "/output/" + namePrefix + "/Genes/";
+                                    isoCommonName = oDir + "/" + namePrefix + "/output/Isoforms/";
+                                    geneCommonName = oDir + "/" + namePrefix + "/output/Genes/";
                                 }
                                 else { // this is a simple bootstrap iteration
-                                    isoCommonName = oDir + "/bootstrap/" + namePrefix + "/experiment_" + bootIteration + "/Isoforms/";
-                                    geneCommonName = oDir + "/bootstrap/" + namePrefix + "/experiment_" + bootIteration + "/Genes/";
+                                    isoCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Isoforms/";
+                                    geneCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Genes/";
                                 }
                                 isoOutputFileName = isoCommonName + "iso_fpkm_estimates";
                                 isoTpmFileName = isoCommonName + "iso_tpm_estimates";
@@ -381,8 +381,8 @@ public class Startup {
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
-                    createTarGZ(oDir + "/bootstrap/", oDir + "/bootstrap.tar.gz");
-                    removeDir(oDir + "/bootstrap/");
+                    createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
+                    removeDir(oDir + "/" + namePrefix + "/bootstrap/");
 		}
 	}
 
@@ -472,6 +472,7 @@ public class Startup {
                     String readName = aiso.readName;
                     if (bootMultiplicities.get(readName) > 0) {
                         ArrayIsoformList new_aiso = new ArrayIsoformList(aiso);
+                        new_aiso.setMultiplicity(bootMultiplicities.get(readName));
                         super_igor_isoform_list.add(new_aiso);
                     }
                 }
