@@ -252,9 +252,6 @@ public class Startup {
                                     }
                                 }
 
-                                System.out.println("this is bootcount: " + bootCount);
-                                System.out.println("this is bootarray size: " + bootArray.size());
-
                                 List<List<IsoformList>> new_clusters;
 
                                 for (int bootIteration = 0; bootIteration <= nrBootstraps; bootIteration ++) {  // MAIN BOOTSTRAP FOR LOOP

@@ -29,8 +29,8 @@ public class IsoEmOptionParser extends OptionParser {
 	public static final String OP_COUNT = "report-counts";
 	public static final String OP_POLYA = "polyA";
   	public static final String OP_LIMIT_NREADS = "limit-nreads";
-  	public static final String OP_OUTPUT_DIR = "o";
-  	public static final String OP_OUTPUT_FILE_PREFIX = "O";
+  	public static final String OP_OUTPUT_DIR = "O";
+  	public static final String OP_OUTPUT_FILE_PREFIX = "o";
         public static final String OP_NUMBER_BOOTSTRAPS = "B"; // how many bootstraps to do if any
         public static final String OP_CONFIDENCE_VALUE = "C"; // confidence intervals; percent
 
@@ -72,7 +72,7 @@ public class IsoEmOptionParser extends OptionParser {
 						+ String.format("This requires the genome sequence to be specified (see -%s).", OP_GENOME));
 		accepts(OP_BIAS, "Perform hexamer bias correction");
 		accepts(OP_ANNOTATED_REPEATS_FILE, "Drop alignments falling withing annotated repeats").withRequiredArg().describedAs("Repeats GTF");
-		accepts(OP_NUMBER_BOOTSTRAPS, "Number of bootstrap iterations").withRequiredArg().ofType(Integer.class).describedAs("Number of bootstrap iterations");
+		accepts(OP_NUMBER_BOOTSTRAPS, "Number of bootstrap iterations").withRequiredArg().ofType(Integer.class).describedAs("Number of bootstrap iterations (default 200)");
 		accepts(OP_CONFIDENCE_VALUE, "Confidence value (default 95)").withRequiredArg().ofType(Integer.class).describedAs("Confidence value");
 
 		accepts(OP_REPEAT_THRESHOLD,
