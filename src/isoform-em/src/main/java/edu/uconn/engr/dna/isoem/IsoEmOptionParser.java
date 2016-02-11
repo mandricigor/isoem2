@@ -33,6 +33,7 @@ public class IsoEmOptionParser extends OptionParser {
   	public static final String OP_OUTPUT_FILE_PREFIX = "o";
         public static final String OP_NUMBER_BOOTSTRAPS = "B"; // how many bootstraps to do if any
         public static final String OP_CONFIDENCE_VALUE = "C"; // confidence intervals; percent
+        public static final String OP_ENDSEQ = "endseq";
 
 
 	public IsoEmOptionParser() {
@@ -79,6 +80,7 @@ public class IsoEmOptionParser extends OptionParser {
 						"Drop all reads that have more than this many bases inside annotated repeats. Default: 20.").withRequiredArg().describedAs("nbases");
 		accepts(OP_UNIQ, "Infer frequencies from uniquely mapped reads only");
 		accepts(OP_COUNT, "Report read counts instead of isoform frequencies");
+                accepts(OP_ENDSEQ, "Reads have been generated using an end-sequencing protocol");
 		accepts(OP_POLYA,
 						"Reads have been generated from mRNAs with polyA tails of "
 						+ "approximately this number of bases"

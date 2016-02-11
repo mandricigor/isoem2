@@ -1,6 +1,7 @@
 sample
 sample.sh
 bin/isoviz
+build.log
 lib/*
 README-SAMPLE.TXT
 igor.sh

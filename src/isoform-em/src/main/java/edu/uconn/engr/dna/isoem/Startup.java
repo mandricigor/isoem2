@@ -206,6 +206,7 @@ public class Startup {
 		}
 		boolean runUniq = options.has(OP_UNIQ);
 		boolean reportCounts = options.has(OP_COUNT);
+                boolean endSeq = options.has(OP_ENDSEQ);
 		for (int i = 0; i < n; ++i) {
                         String namePrefix = null;
 			try {
@@ -218,7 +219,7 @@ public class Startup {
 								matePairs, genome, qualityScores, mismatches, 
 								KMER_LENGTH, null, annotatedRepeatsStartsMap,
 								annotatedRepeatsEndsMap, readRepeatExclusionThreshold,
-								runUniq, reportCounts, polyALength, readLimit);
+								runUniq, reportCounts, endSeq, polyALength, readLimit);
 
 				if (options.has(OP_BIAS)) {
 					System.out.println("Detecting biases...");
