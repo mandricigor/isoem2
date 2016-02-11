@@ -1,6 +1,6 @@
-IsoEM 1.1.4: inferring isoform and gene expression levels from RNA-Seq data
+IsoEM 1.1.5: inferring isoform and gene expression levels from RNA-Seq data
 
-Download IsoEM 1.1.4 from github: https://github.com/mandricigor/isoem-bootstrap.
+Download IsoEM 1.1.5 from github: https://github.com/mandricigor/isoem-bootstrap.
 
 Installation:
 ------------
