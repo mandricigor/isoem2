@@ -41,6 +41,7 @@ public class IsoEMFlowTool {
 	private Map<String, Integer>[] kmerCount;
 	private boolean runUniq;
 	private boolean reportCounts;
+        private boolean endSeq;
 	private Map<String, List<Integer>> annotatedRepeatsStartsMap;
 	private Map<String, List<Integer>> annotatedRepeatsEndsMap;
 	private int repeatReadExclusionThreshold;
@@ -64,11 +65,13 @@ public class IsoEMFlowTool {
                             int repeatReadExclusionThreshold,
                             boolean runUniq,
                             boolean reportCounts, 
+                            boolean endSeq,
 							int polyALen,
 							int maxNReads) {
 		this.kmerCount = kmerCount;
 		this.runUniq = runUniq;
 		this.reportCounts = reportCounts;
+                this.endSeq = endSeq;
         this.polyALen = polyALen;
         int cores = Runtime.getRuntime().availableProcessors();
 		nThreads = cores <= 2 ? 2 : cores - 1;
@@ -136,7 +139,13 @@ public class IsoEMFlowTool {
 			int count = 0;
 			for (Isoform i : isoforms.groupIterator()) {
 				int l = i.length();
-				double adjLen = 0;
+				double adjLen;
+                                if (isEndSeq()) {
+                                    adjLen = (double)l>fragmentLengthMean ? fragmentLengthMean : (double)l;
+                                    adjLen = Math.round(adjLen);
+                                }
+                                else {
+                                adjLen = 0;
 				if (l > fragmentLengthMean + 4 * stdDev) {
 					adjLen = l - fragmentLengthMean + 1;
 				} else {
@@ -145,11 +154,19 @@ public class IsoEMFlowTool {
 					}
 					adjLen = Math.round(adjLen);
 				}
+                                }
 				adjustedIsoLengths.put(i.getName(), adjLen);
 			}
 //            System.out.println("There are " + count + " isoforms shorter than 400 bases");
 		} else {
 			for (Isoform iso : isoforms.groupIterator()) {
+                                int adjustedLength;
+                                if (isEndSeq()) {
+                                    double l = (double)iso.length();
+                                    double adjLen = (l>fragmentLengthMean ? fragmentLengthMean : l);
+                                    adjustedLength = (int)Math.round(adjLen);
+                                } else
+                                {
 				String chrom = iso.getChromosome();
 				int n = (int) (iso.length() - fragmentLengthMean + 1);
 				int adjustedLength = n;
@@ -172,6 +189,7 @@ public class IsoEMFlowTool {
 						adjustedLength -= (repeatLength - readLength + 2 * repeatReadExclusionThreshold - 1);
 					}
 				}
+                                }
 				adjustedIsoLengths.put(iso.getName(), Math.max(0.0, adjustedLength));
 			}
 		}
@@ -289,6 +307,10 @@ public class IsoEMFlowTool {
 	boolean isReportCounts() {
 		return reportCounts;
 	}
+
+        boolean isEndSeq() {
+                return endSeq;
+        }
 
 	static class RepeatIsoMapper {
 
