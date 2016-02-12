@@ -1,12 +1,12 @@
-IsoEM 1.1.5: inferring isoform and gene expression levels from RNA-Seq data
 
-Download IsoEM 1.1.5 from github: https://github.com/mandricigor/isoem-bootstrap.
+  IsoEM README
+
 
 Installation:
 ------------
 
-1. Create a isoem directory and download the compressed ISOEM-1.1.4
-   from the github repository: https://github.com/mandricigor/isoem-bootstrap
+1. Create a isoem directory and download the compressed ISOEM-1.1.5
+   from http://dna.engr.uconn.edu/software/IsoEM/IsoEM-1.1.5.zip 
 
 2. Edit isoEMDir location in files under bin according to 
    your local installation
@@ -188,14 +188,15 @@ Optional library options:
                                           sequence to be specified (see -g).
 -o <file prefix>			Output files prefix. It can include path.
 					  Default: same as sam file name
--O <dir prefix>                         Output directory prefix
--B <nr bootstraps>                      Number of bootstraps to perform
-                                          Default: 200
--C <confidence intervals>               Confidence Intervals (CI).
-                                          Default 95 % (200 bootstrap iterations). 
-
-
-
+--counts                                Report (expected) read counts for each transcript.
+                                          The default is to report FPKMs.  We 
+                                          recommend normalization of expected counts to 
+                                          CPM (counts per million) and FPKMs to TPM (transcripts 
+                                          per million), both achieved by dividing each transcript/gene 
+                                          estimate by the sum of counts or FPKMs.
+--endseq                                Disable length normalization for data generated using 5' or 3' 
+                                          end-sequencing protocols, which generate a single 
+                                          fragment per cDNA molecule
 
 
 Source Code:
@@ -207,10 +208,8 @@ installation path.
 
 Revision history
 ----------------
-
-Version 1.1.4 (1/20/16)  - added TPM and ECPM estimates for genes and isoforms
-			 - added option to compute confidence intervals (bootstrapping)
-                         - added option for reading alignments from standard input
+Version 1.1.4 (12/18/15) - added --counts option to generate expected read counts and --endseq to 
+			   handle data from end-sequencing protocols
 Version 1.1.3 (10/11/15) - bug fix in handling CIGAR with indels in convert-iso-to-genome-coords
 			 - bug fix related to hisat/hisat2 alignments
 Version 1.1.1 (11/5/12)  - bug fix related to clipped read alignments (CIGAR with S field)
@@ -237,8 +236,6 @@ Contact
 -------
 For questions or suggestions regarding IsoEM you can contact:
 
-
-     Igor Mandric (imandric1@student.gsu.edu)
      Sahar Al Seesi (sahar@engr.uconn.edu)
      Ion Mandoiu (ion@engr.uconn.edu)
      Marius Nicolae (man09004@engr.uconn.edu)

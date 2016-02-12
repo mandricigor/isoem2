@@ -561,7 +561,7 @@ public class Utils {
 			@Override
 			public int compare(Map.Entry<String, Double> o1,
 					Map.Entry<String, Double> o2) {
-				return o2.getValue().compareTo(o1.getValue());
+                                return o1.getKey().compareTo(o2.getKey());
 			}
 		});
 		return entries;
