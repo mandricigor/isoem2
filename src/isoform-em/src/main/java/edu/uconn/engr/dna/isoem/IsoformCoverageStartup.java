@@ -139,7 +139,7 @@ public class IsoformCoverageStartup {
 				IsoEMFlowTool tool = new IsoEMFlowTool(isoforms,
 						isFirstReadFromCodingStrand, isAntisense,
 						matePairs, genome, qualityScores, mismatches, KMER_LENGTH,
-						null, null, null, -1, runUniq, false, polyALength, -1);
+						null, null, null, -1, runUniq, false, false, polyALength, -1);
 
 				if (options.has(OP_BIAS)) {
 					System.out.println("Detecting biases...");

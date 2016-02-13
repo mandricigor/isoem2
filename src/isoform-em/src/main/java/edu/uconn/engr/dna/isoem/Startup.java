@@ -53,10 +53,6 @@ public class Startup {
 
 
 	public static void main(String[] argsList) throws Exception {
-//		for (int i = 0; i < argsList.length; ++i) {
-//			System.out.println(argsList[i]);
-//		}
-
 		OptionParser parser = new IsoEmOptionParser();
 		OptionSet options;
 		try {
@@ -90,8 +86,24 @@ public class Startup {
                     //}
                 }
 
+                // ADDED in version 1.1.5 by Igor Mandric (GSU)
                 int nrBootstraps = 0;
+                int nrConfidenceBootstraps = 0;
                 int confidenceValue = 95;
+
+                boolean has_confidence_value = options.has(OP_CONFIDENCE_VALUE);
+                boolean has_number_bootstraps = options.has(OP_NUMBER_BOOTSTRAPS);
+
+                if (has_confidence_value) {
+                    nrConfidenceBootstraps = 200; // Just hardcoded, so what?
+                    confidenceValue = (int) options.valueOf(OP_CONFIDENCE_VALUE);
+                    cicalc = new ConfidenceIntervalCalculator(confidenceValue);
+                }
+                if (has_number_bootstraps) {
+                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
+                }
+
+                /*
                 if (options.has(OP_CONFIDENCE_VALUE)) {
                     nrBootstraps = 200; // Just hardcoded, so what?
                     confidenceValue = (int) options.valueOf(OP_CONFIDENCE_VALUE);
@@ -100,6 +112,7 @@ public class Startup {
                 else if (options.has(OP_NUMBER_BOOTSTRAPS)) {
                     nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
                 }
+                */
 
                 Map<String, Integer> multiplicities = null;
                 List<String> bootArray = null;
@@ -255,7 +268,8 @@ public class Startup {
 
                                 List<List<IsoformList>> new_clusters;
 
-                                for (int bootIteration = 0; bootIteration <= nrBootstraps; bootIteration ++) {  // MAIN BOOTSTRAP FOR LOOP
+                                int nrIterations = (nrBootstraps > nrConfidenceBootstraps)? nrBootstraps: nrConfidenceBootstraps;
+                                for (int bootIteration = 0; bootIteration <= nrIterations; bootIteration ++) {  // MAIN BOOTSTRAP FOR LOOP
                                 if (bootIteration > 0) {
                                     new_clusters = doBootstrapClusters(clusters2, bootCount, multiplicities, bootArray);
                                 }
@@ -270,7 +284,7 @@ public class Startup {
                                 Map<String, Double> ecpms = EmUtils.computeEcpms(freq);
 
 
-                                if (options.has(OP_CONFIDENCE_VALUE)) {
+                                if (has_confidence_value) {
                                     cicalc.updateIsoFpkm(freq);
                                     cicalc.updateIsoTpm(tpms);
                                     cicalc.updateIsoEcpm(ecpms);
@@ -320,21 +334,22 @@ public class Startup {
                                 geneEcpmFileName = geneCommonName + "gene_ecpm_estimates";
 
 
-                                // writing fpkms for isoforms
-				System.out.println("Writing isoform FPKMs to "
+                                if ((bootIteration == 0) || (bootIteration < nrBootstraps)) {
+                                    // writing fpkms for isoforms
+				    System.out.println("Writing isoform FPKMs to "
 								+ isoOutputFileName);
-				writeValues(sortEntriesById(freq), isoOutputFileName);
+				    writeValues(sortEntriesById(freq), isoOutputFileName);
 
-                                // writing tmps for isoforms
-				System.out.println("Writing isoform TPMs to "
+                                    // writing tmps for isoforms
+				    System.out.println("Writing isoform TPMs to "
 								+ isoTpmFileName);
-				writeValues(sortEntriesById(tpms), isoTpmFileName);
+				    writeValues(sortEntriesById(tpms), isoTpmFileName);
 
-                                // writing ecpms for isoforms
-				System.out.println("Writing isoform ECPMs to "
+                                    // writing ecpms for isoforms
+				    System.out.println("Writing isoform ECPMs to "
 								+ isoEcpmFileName);
-				writeValues(sortEntriesById(ecpms), isoEcpmFileName);
-
+				    writeValues(sortEntriesById(ecpms), isoEcpmFileName);
+                                }
                                 //----------------------------------
 				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
                                 Map<String, Double> fpkm_weigthedGeneLengths = Utils.fpkmWeigthedGeneLengths(freq,isoforms, isoformToClusterMap);
@@ -344,43 +359,44 @@ public class Startup {
                                 tpms = EmUtils.computeTpms(freq);
                                 ecpms = EmUtils.computeTpms(freq);
 
-                                if (options.has(OP_CONFIDENCE_VALUE)) {
+                                if (has_confidence_value) {
                                     cicalc.updateGeneFpkm(freq);
                                     cicalc.updateGeneTpm(tpms);
                                     cicalc.updateGeneEcpm(ecpms);
                                 }
 
-                                // writing fpkms for genes
-				System.out.println("Writing gene FPKMs to "
+                                if ((bootIteration == 0) || (bootIteration < nrBootstraps)) {
+                                    // writing fpkms for genes
+				    System.out.println("Writing gene FPKMs to "
 								+ geneOutputFileName);
-				writeValues(sortEntriesById(freq), geneOutputFileName);
-
-                                // writing tpms for genes
-				System.out.println("Writing gene TPMs to "
+				    writeValues(sortEntriesById(freq), geneOutputFileName);
+                                    // writing tpms for genes
+				    System.out.println("Writing gene TPMs to "
 								+ geneTpmFileName);
-				writeValues(sortEntriesById(tpms), geneTpmFileName);
-
-                                // writing ecpms for genes
-				System.out.println("Writing gene ECPMs to "
+				    writeValues(sortEntriesById(tpms), geneTpmFileName);
+                                    // writing ecpms for genes
+				    System.out.println("Writing gene ECPMs to "
 								+ geneEcpmFileName);
-				writeValues(sortEntriesById(ecpms), geneEcpmFileName);
-
+				    writeValues(sortEntriesById(ecpms), geneEcpmFileName);
+                                }
 				timer.stop();
 				log.debug("Total time " + timer.getGlobalTime());
 				System.out.printf("Done. (%.2fs)\n",
 								timer.getGlobalTime() / 1000.0);
                                 }
                             // now we have to compute the confidence intervals if any and to reset the cicalc
-                            if (options.has(OP_CONFIDENCE_VALUE)) {
-                                String dirname = oDir + "/output/" + namePrefix + "/confidence/";
+                            if (has_confidence_value) {
+                                String dirname = oDir + "/output/" + namePrefix + "/ConfidenceIntervals/";
                                 cicalc.writeValues(dirname);
                                 cicalc.reset();
                             }
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
-                    createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
-                    removeDir(oDir + "/" + namePrefix + "/bootstrap/");
+                    if (has_number_bootstraps) {
+                        createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
+                        removeDir(oDir + "/" + namePrefix + "/bootstrap/");
+                    }
 		}
 	}
 

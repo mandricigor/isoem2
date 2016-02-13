@@ -11,7 +11,7 @@ Installation:
 2. Edit isoEMDir location in files under bin according to 
    your local installation
 
-3. Uncompress IsoEM-1.1.4.zip into the directory.
+3. Uncompress IsoEM-1.1.5.zip into the directory.
 
 4. [Optional] On windows you might want to add the IsoEM 
    installation directory to the path, such that you can invoke 
@@ -111,9 +111,12 @@ Optional library options:
                                           the given number of bases
 -o <file prefix>			Output files prefix. It can include path.
 					  Default: same as sam file name
-
-
-
+-O <directory prefix>                   Output directory prefix. If read alignments
+                                          are read from stdin, the option is mandatory.
+-B <number bootstraps>                  Number of bootstrap iterations to perform.
+-C <confidence interval (%)>            Compute expression of genes/isoforms with
+                                          specified confidence intervals. Provide
+                                          an integer (default: 95, bootstraps: 200)
 Read Alignment:
 ---------------
 
@@ -208,6 +211,9 @@ installation path.
 
 Revision history
 ----------------
+Version 1.1.5 (1/20/16)  - added TPM and ECPM estimates for genes and isoforms
+			 - added option to compute confidence intervals (bootstrapping)
+                         - added option for reading alignments from standard input
 Version 1.1.4 (12/18/15) - added --counts option to generate expected read counts and --endseq to 
 			   handle data from end-sequencing protocols
 Version 1.1.3 (10/11/15) - bug fix in handling CIGAR with indels in convert-iso-to-genome-coords

@@ -169,7 +169,7 @@ public class IsoEMFlowTool {
                                 {
 				String chrom = iso.getChromosome();
 				int n = (int) (iso.length() - fragmentLengthMean + 1);
-				int adjustedLength = n;
+				adjustedLength = n;
 				if (annotatedRepeatsStartsMap.containsKey(chrom)) {
 					RepeatIsoMapper repeatIsoMapper = new RepeatIsoMapper(iso,
 									annotatedRepeatsStartsMap.get(chrom),

@@ -84,6 +84,10 @@ class IntervalTracker {
 
 
 public class ConfidenceIntervalCalculator {
+        private static final int sigturn = 63;
+
+        private int counter; // used to see whether we did not overcome 200 bootstraps
+        private int small_counter;
         private int confidence;
 
         private Map<String, IntervalTracker> gene_fpkm;
@@ -102,7 +106,10 @@ public class ConfidenceIntervalCalculator {
         }
 
 
-        private void updateStorage(Map<String, IntervalTracker> storage, Map<String, Double> freq) {
+        private void updateStorage(Map<String, IntervalTracker> storage, Map<String, Double> freq, int signature) {
+           /*
+            * signature is used to check if we updated all the storages
+            */
             if (storage.size() == 0) {
                 initializeStorage(storage, freq);
             }
@@ -111,6 +118,11 @@ public class ConfidenceIntervalCalculator {
                 if (iTracker != null) {
                     iTracker.push_value(entry.getValue());
                 }
+            }
+            small_counter += signature;
+            if (small_counter == sigturn) {
+                counter ++;
+                small_counter = 0; // reset it here
             }
         }
 
@@ -126,6 +138,8 @@ public class ConfidenceIntervalCalculator {
 
         public ConfidenceIntervalCalculator(int confidence) {
             this.confidence = confidence;
+            this.counter = 0;
+            this.small_counter = 0;
             gene_fpkm = new HashMap<String, IntervalTracker>();
             gene_tpm = new HashMap<String, IntervalTracker>();
             gene_ecpm = new HashMap<String, IntervalTracker>();
@@ -135,6 +149,8 @@ public class ConfidenceIntervalCalculator {
         }
 
         public void reset() {
+            counter = 0;
+            small_counter = 0;
             gene_fpkm.clear();
             gene_tpm.clear();
             gene_ecpm.clear();
@@ -144,27 +160,39 @@ public class ConfidenceIntervalCalculator {
         }
 
         public void updateGeneFpkm(Map<String, Double> freq) {
-            updateStorage(gene_fpkm, freq);
+            if (counter < 200) {
+                updateStorage(gene_fpkm, freq, 1);
+            }
         }
 
         public void updateGeneTpm(Map<String, Double> freq) {
-            updateStorage(gene_tpm, freq);
+            if (counter < 200) {
+                updateStorage(gene_tpm, freq, 2);
+            }
         }
 
         public void updateGeneEcpm(Map<String, Double> freq) {
-            updateStorage(gene_ecpm, freq);
+            if (counter < 200) {
+                updateStorage(gene_ecpm, freq, 4);
+            }
         }
 
         public void updateIsoFpkm(Map<String, Double> freq) {
-            updateStorage(iso_fpkm, freq);
+            if (counter < 200) {
+                updateStorage(iso_fpkm, freq, 8);
+            }
         }
 
         public void updateIsoTpm(Map<String, Double> freq) {
-            updateStorage(iso_tpm, freq);
+            if (counter < 200) {
+                updateStorage(iso_tpm, freq, 16);
+            }
         }
 
         public void updateIsoEcpm(Map<String, Double> freq) {
-            updateStorage(iso_ecpm, freq);
+            if (counter < 200) {
+                updateStorage(iso_ecpm, freq, 32);
+            }
         }
 
         public Map<String, Pair<Double, Double>> getGeneFpkmCI() {
