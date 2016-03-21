@@ -1,6 +1,6 @@
 #!/bin/sh
 
-isoEMDir=/data1/igorm/SUPER_IGOR_ISOEM/isoem-1.1.5
+isoEMDir=/home/software/public_html/IsoEM/isoem-1.1.5
 
 echo isoem v 1.1.5
 
