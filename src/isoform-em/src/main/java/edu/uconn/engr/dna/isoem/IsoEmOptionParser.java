@@ -94,6 +94,7 @@ public class IsoEmOptionParser extends OptionParser {
 	@Override
 	public void printHelpOn(Writer sink) throws IOException {
 		sink.write("Usage: isoem [global options]* [library options]* <aligned_reads.sam>\n");
+                sink.write("   Or: cat <aligned_reads.sam> | isoem [global options]* [library options]*\n");
 		sink.write("Mandatory global options:                                                             \n"
 						+ "------------------------                                                       \n"
 						+ "-G, --GTF <GTF file>                    Known genes and isoforms in GTF format \n");
@@ -148,8 +149,18 @@ public class IsoEmOptionParser extends OptionParser {
 						+ "                                          this many bases inside annotated     \n"
 						+ "                                          repeats. Default: 20.                \n"
 						+ "--polyA <nbases>                        Reads have been generated from mRNAs   \n"
-                        + "                                          with polyA tails of approximately    \n"
-                        + "                                          the given number of bases            \n");
+                                                + "                                          with polyA tails of approximately    \n"
+                                                + "                                          the given number of bases            \n"
+                                                + "-o <file prefix>                        Output files prefix. It can include    \n"
+                                                + "                                          path. Default: same as sam file name \n"
+                                                + "-O <directory prefix>                   Output directory prefix. If read       \n"
+                                                + "                                          alignments are read from stdin,      \n"
+                                                + "                                          the default value is stdinSample     \n"
+                                                + "-B <number bootstraps>                  Number of bootstrap iterations         \n"
+                                                + "-C <confidence interval (%)>            Compute expression of genes/isoforms   \n"
+                                                + "                                          with specified confidence intervals. \n"
+                                                + "                                          Provide an integer (default: 95,     \n"
+                                                + "                                          bootstraps: 200)                     \n");
 		sink.flush();
 	}
 

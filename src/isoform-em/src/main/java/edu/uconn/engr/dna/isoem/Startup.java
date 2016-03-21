@@ -66,12 +66,16 @@ public class Startup {
 
                 ConfidenceIntervalCalculator cicalc = null;
 
-                if (!options.has(OP_OUTPUT_DIR)) { // if you read from stdin, provide output file prefix
-		    parser.printHelpOn(System.out);
-		    System.exit(1);
-                }
 
-                String oDir = options.valueOf(OP_OUTPUT_DIR).toString();
+                String oDir;
+                if (!options.has(OP_OUTPUT_DIR)) { // if you read from stdin, provide output file prefix
+                    oDir = ".";
+		    //parser.printHelpOn(System.out);
+		    //System.exit(1);
+                }
+                else {
+                    oDir = options.valueOf(OP_OUTPUT_DIR).toString();
+                }
 		List<String> samFiles = options.nonOptionArguments();
                 
                 if (samFiles.size() < 1) {
@@ -82,8 +86,13 @@ public class Startup {
                     //}
                     //else {
                         samFiles = new ArrayList<String>();
-                        samFiles.add("stdin");
+                        samFiles.add("stdinSample");
                     //}
+                }
+
+                if (!options.has(OP_GTF) || options.has(OP_HELP)) {
+                        parser.printHelpOn(System.out);
+                        System.exit(1);
                 }
 
                 // ADDED in version 1.1.5 by Igor Mandric (GSU)

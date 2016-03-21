@@ -54,6 +54,10 @@ You can run IsoEm from the command line as follows:
 
      isoem [global options]* [library options]* <aligned_reads.sam>
 
+Or, if you run provide read alignments from the standard input:
+
+     cat <aligned_reads.sam> | isoem [global options]* [library options]*
+
 Mandatory global options:
 ------------------------
 -G, --GTF <GTF file>                    Known genes and isoforms in GTF format
@@ -112,7 +116,8 @@ Optional library options:
 -o <file prefix>			Output files prefix. It can include path.
 					  Default: same as sam file name
 -O <directory prefix>                   Output directory prefix. If read alignments
-                                          are read from stdin, the option is mandatory.
+                                          are read from stdin, the default value 
+                                          is stdinSample
 -B <number bootstraps>                  Number of bootstrap iterations to perform.
 -C <confidence interval (%)>            Compute expression of genes/isoforms with
                                           specified confidence intervals. Provide
