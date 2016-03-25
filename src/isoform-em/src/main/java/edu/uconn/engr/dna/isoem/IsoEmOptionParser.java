@@ -173,7 +173,7 @@ public class IsoEmOptionParser extends OptionParser {
                                                 + "--endseq                                Disable length normalization for data  \n"
                                                 + "                                          generated using 5' or 3' end-sequen- \n"
                                                 + "                                          cing protocols, which generate a     \n"
-                                                + "                                          single fragment per cDNA molecule");
+                                                + "                                          single fragment per cDNA molecule    \n");
 		sink.flush();
 	}
 
