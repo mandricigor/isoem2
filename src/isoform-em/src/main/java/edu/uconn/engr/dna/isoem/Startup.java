@@ -105,7 +105,9 @@ public class Startup {
 
                 if (has_confidence_value) {
                     nrConfidenceBootstraps = 200; // Just hardcoded, so what?
-                    confidenceValue = (int) options.valueOf(OP_CONFIDENCE_VALUE);
+                    if (options.valueOf(OP_CONFIDENCE_VALUE) != null) {
+                        confidenceValue = (int) options.valueOf(OP_CONFIDENCE_VALUE);
+                    }
                     cicalc = new ConfidenceIntervalCalculator(confidenceValue);
                 }
                 if (has_number_bootstraps) {
@@ -366,7 +368,7 @@ public class Startup {
 				EmUtils.addMissingIds(freq, clusters.idIterator());
 
                                 tpms = EmUtils.computeTpms(freq);
-                                ecpms = EmUtils.computeTpms(freq);
+                                ecpms = EmUtils.computeEcpms(freq);
 
                                 if (has_confidence_value) {
                                     cicalc.updateGeneFpkm(freq);
@@ -395,7 +397,7 @@ public class Startup {
                                 }
                             // now we have to compute the confidence intervals if any and to reset the cicalc
                             if (has_confidence_value) {
-                                String dirname = oDir + "/output/" + namePrefix + "/ConfidenceIntervals/";
+                                String dirname = oDir + "/" + namePrefix + "/output/ConfidenceIntervals/";
                                 cicalc.writeValues(dirname);
                                 cicalc.reset();
                             }

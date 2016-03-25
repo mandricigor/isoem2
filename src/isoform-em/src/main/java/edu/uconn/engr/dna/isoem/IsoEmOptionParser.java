@@ -26,7 +26,7 @@ public class IsoEmOptionParser extends OptionParser {
 	public static final String OP_ANNOTATED_REPEATS_FILE = "r";
 	public static final String OP_REPEAT_THRESHOLD = "repeat-threshold";
 	public static final String OP_UNIQ = "uniq";
-	public static final String OP_COUNT = "report-counts";
+	public static final String OP_COUNT = "counts";
 	public static final String OP_POLYA = "polyA";
   	public static final String OP_LIMIT_NREADS = "limit-nreads";
   	public static final String OP_OUTPUT_DIR = "O";
@@ -74,7 +74,7 @@ public class IsoEmOptionParser extends OptionParser {
 		accepts(OP_BIAS, "Perform hexamer bias correction");
 		accepts(OP_ANNOTATED_REPEATS_FILE, "Drop alignments falling withing annotated repeats").withRequiredArg().describedAs("Repeats GTF");
 		accepts(OP_NUMBER_BOOTSTRAPS, "Number of bootstrap iterations").withRequiredArg().ofType(Integer.class).describedAs("Number of bootstrap iterations (default 200)");
-		accepts(OP_CONFIDENCE_VALUE, "Confidence value (default 95)").withRequiredArg().ofType(Integer.class).describedAs("Confidence value");
+		accepts(OP_CONFIDENCE_VALUE, "Confidence value (default 95)").withOptionalArg().ofType(Integer.class).describedAs("Confidence value");
 
 		accepts(OP_REPEAT_THRESHOLD,
 						"Drop all reads that have more than this many bases inside annotated repeats. Default: 20.").withRequiredArg().describedAs("nbases");
@@ -160,7 +160,20 @@ public class IsoEmOptionParser extends OptionParser {
                                                 + "-C <confidence interval (%)>            Compute expression of genes/isoforms   \n"
                                                 + "                                          with specified confidence intervals. \n"
                                                 + "                                          Provide an integer (default: 95,     \n"
-                                                + "                                          bootstraps: 200)                     \n");
+                                                + "                                          bootstraps: 200)                     \n"
+                                                + "--counts                                Report (expected) read counts for each \n"
+                                                + "                                          transcript. The default is to report \n"
+                                                + "                                          FPKMs. We recommend normalization of \n"
+                                                + "                                          expected counts to CPM (counts per   \n"
+                                                + "                                          million) and FPKMs to TPM (tran-     \n"
+                                                + "                                          scripts per million), both achieved  \n"
+                                                + "                                          by dividing each transcript/gene     \n"
+                                                + "                                          estimate by the sum of counts or     \n"
+                                                + "                                          FPKMs.                               \n"
+                                                + "--endseq                                Disable length normalization for data  \n"
+                                                + "                                          generated using 5' or 3' end-sequen- \n"
+                                                + "                                          cing protocols, which generate a     \n"
+                                                + "                                          single fragment per cDNA molecule");
 		sink.flush();
 	}
 

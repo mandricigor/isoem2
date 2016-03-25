@@ -122,6 +122,17 @@ Optional library options:
 -C <confidence interval (%)>            Compute expression of genes/isoforms with
                                           specified confidence intervals. Provide
                                           an integer (default: 95, bootstraps: 200)
+--counts                                Report (expected) read counts for each transcript.
+                                          The default is to report FPKMs.  We 
+                                          recommend normalization of expected counts to 
+                                          CPM (counts per million) and FPKMs to TPM (transcripts 
+                                          per million), both achieved by dividing each transcript/gene 
+                                          estimate by the sum of counts or FPKMs.
+--endseq                                Disable length normalization for data generated using 5' or 3' 
+                                          end-sequencing protocols, which generate a single 
+                                          fragment per cDNA molecule
+
+
 Read Alignment:
 ---------------
 
@@ -196,16 +207,6 @@ Optional library options:
                                           sequence to be specified (see -g).
 -o <file prefix>			Output files prefix. It can include path.
 					  Default: same as sam file name
---counts                                Report (expected) read counts for each transcript.
-                                          The default is to report FPKMs.  We 
-                                          recommend normalization of expected counts to 
-                                          CPM (counts per million) and FPKMs to TPM (transcripts 
-                                          per million), both achieved by dividing each transcript/gene 
-                                          estimate by the sum of counts or FPKMs.
---endseq                                Disable length normalization for data generated using 5' or 3' 
-                                          end-sequencing protocols, which generate a single 
-                                          fragment per cDNA molecule
-
 
 Source Code:
 ------------
