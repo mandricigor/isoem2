@@ -123,13 +123,13 @@ Optional library options:
                                           specified confidence intervals. Provide
                                           an integer (default: 95, bootstraps: 200)
 --counts                                Report (expected) read counts for each transcript.
-                                          The default is to report FPKMs.  We 
-                                          recommend normalization of expected counts to 
-                                          CPM (counts per million) and FPKMs to TPM (transcripts 
-                                          per million), both achieved by dividing each transcript/gene 
+                                          The default is to report FPKMs.  We
+                                          recommend normalization of expected counts to
+                                          CPM (counts per million) and FPKMs to TPM (transcripts
+                                          per million), both achieved by dividing each transcript/gene
                                           estimate by the sum of counts or FPKMs.
---endseq                                Disable length normalization for data generated using 5' or 3' 
-                                          end-sequencing protocols, which generate a single 
+--endseq                                Disable length normalization for data generated using 5' or 3'
+                                          end-sequencing protocols, which generate a single
                                           fragment per cDNA molecule
 
 
@@ -248,6 +248,7 @@ Contact
 -------
 For questions or suggestions regarding IsoEM you can contact:
 
+     Igor Mandric (imandric1@student.gsu.edu)
      Sahar Al Seesi (sahar@engr.uconn.edu)
      Ion Mandoiu (ion@engr.uconn.edu)
      Marius Nicolae (man09004@engr.uconn.edu)
