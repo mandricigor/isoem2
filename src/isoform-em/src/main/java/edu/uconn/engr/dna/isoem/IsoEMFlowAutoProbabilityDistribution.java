@@ -62,9 +62,15 @@ public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
 		System.out.println("Reads after processing quality scores: " + CoordToIsoformListForAlignmentsParameterRunnable2.totalNReads);
 		System.out.println("Reads after computing compatibilities: " + AlignmentToReadConverter.totalReads);
 		System.out.println("Reads that go into EM (possibly scaled if bias correction is enabled): " + t.countReads2(clusters));
-
-        Map<String, Double> map = t.runEM(clusters, t.createAdjustedIsoLengths(pd));
-        return EmUtils.fpkm(map, t.getIsoforms(), pd.getMean());
+        Map<String, Double> result;
+        Map<String, Double> adjustedWeights =  t.createAdjustedIsoLengths(pd);
+        Map<String, Double> map = t.runEM(clusters, adjustedWeights);
+        if (!t.isReportCounts()) {
+                result = EmUtils.fpkm(map, adjustedWeights);
+        } else {
+                result = map;
+        }
+        return result;
     }
 
     private ParameterRunnableFactory<List<String>, Object> createSamToProbabilityDistributionRunnableFactory(

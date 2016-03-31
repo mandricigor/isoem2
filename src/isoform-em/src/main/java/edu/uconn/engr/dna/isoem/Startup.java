@@ -292,13 +292,11 @@ public class Startup {
 				Map<String, Double> freq = flow.computeFpkms(new_clusters);
 				EmUtils.addMissingIds(freq, isoforms.idIterator());
                                 Map<String, Double> tpms = EmUtils.computeTpms(freq);                  
-                                Map<String, Double> ecpms = EmUtils.computeEcpms(freq);
 
 
                                 if (has_confidence_value) {
                                     cicalc.updateIsoFpkm(freq);
                                     cicalc.updateIsoTpm(tpms);
-                                    cicalc.updateIsoEcpm(ecpms);
                                 }
 
 
@@ -310,11 +308,9 @@ public class Startup {
 
                                 String isoOutputFileName;
                                 String isoTpmFileName;
-                                String isoEcpmFileName;
 
                                 String geneOutputFileName;
                                 String geneTpmFileName;
-                                String geneEcpmFileName;
 
                                 // bootstrap confidence intervals filenames
                                 String isoOutputCiFileName;
@@ -338,11 +334,9 @@ public class Startup {
                                 }
                                 isoOutputFileName = isoCommonName + "iso_fpkm_estimates";
                                 isoTpmFileName = isoCommonName + "iso_tpm_estimates";
-                                isoEcpmFileName = isoCommonName + "iso_ecpm_estimates";
 
                                 geneOutputFileName = geneCommonName + "gene_fpkm_estimates";
                                 geneTpmFileName = geneCommonName + "gene_tpm_estimates";
-                                geneEcpmFileName = geneCommonName + "gene_ecpm_estimates";
 
 
                                 if ((bootIteration == 0) || (bootIteration < nrBootstraps)) {
@@ -355,11 +349,6 @@ public class Startup {
 				    System.out.println("Writing isoform TPMs to "
 								+ isoTpmFileName);
 				    writeValues(sortEntriesById(tpms), isoTpmFileName);
-
-                                    // writing ecpms for isoforms
-				    System.out.println("Writing isoform ECPMs to "
-								+ isoEcpmFileName);
-				    writeValues(sortEntriesById(ecpms), isoEcpmFileName);
                                 }
                                 //----------------------------------
 				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
@@ -368,12 +357,10 @@ public class Startup {
 				EmUtils.addMissingIds(freq, clusters.idIterator());
 
                                 tpms = EmUtils.computeTpms(freq);
-                                ecpms = EmUtils.computeEcpms(freq);
 
                                 if (has_confidence_value) {
                                     cicalc.updateGeneFpkm(freq);
                                     cicalc.updateGeneTpm(tpms);
-                                    cicalc.updateGeneEcpm(ecpms);
                                 }
 
                                 if ((bootIteration == 0) || (bootIteration < nrBootstraps)) {
@@ -385,10 +372,6 @@ public class Startup {
 				    System.out.println("Writing gene TPMs to "
 								+ geneTpmFileName);
 				    writeValues(sortEntriesById(tpms), geneTpmFileName);
-                                    // writing ecpms for genes
-				    System.out.println("Writing gene ECPMs to "
-								+ geneEcpmFileName);
-				    writeValues(sortEntriesById(ecpms), geneEcpmFileName);
                                 }
 				timer.stop();
 				log.debug("Total time " + timer.getGlobalTime());
