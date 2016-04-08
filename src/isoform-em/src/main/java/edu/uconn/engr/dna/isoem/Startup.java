@@ -270,13 +270,13 @@ public class Startup {
                                     for (int jj = 0; jj < clusters2.get(ii).size(); jj ++) {
                                         ArrayIsoformList aiso = (ArrayIsoformList) (clusters2.get(ii).get(jj));
                                         bootCount += aiso.getMultiplicity();
-                                        multiplicities.put(aiso.readName, (int) aiso.getMultiplicity());
+                                        String aisoName = Integer.toString(ii) + "_" + Integer.toString(jj); // IGOR's super hack - we rely on the same order in the ArrayList. It is not changing, right?
+                                        multiplicities.put(aisoName, (int) aiso.getMultiplicity());
                                         for (int pp = 0; pp < aiso.getMultiplicity(); pp ++) {
-                                            bootArray.add(aiso.readName);
+                                            bootArray.add(aisoName);
                                         }
                                     }
                                 }
-
                                 List<List<IsoformList>> new_clusters;
 
                                 int nrIterations = (nrBootstraps > nrConfidenceBootstraps)? nrBootstraps: nrConfidenceBootstraps;
@@ -288,6 +288,13 @@ public class Startup {
                                     new_clusters = clusters2;
                                 }
 
+                                int bootCount2 = 0;
+                                for (int ii = 0; ii < new_clusters.size(); ii ++) {
+                                    for (int jj = 0; jj < new_clusters.get(ii).size(); jj ++) {
+                                        ArrayIsoformList aiso = (ArrayIsoformList) (new_clusters.get(ii).get(jj));
+                                        bootCount2 += aiso.getMultiplicity();
+                                    }
+                                }
 
 				Map<String, Double> freq = flow.computeFpkms(new_clusters);
 				EmUtils.addMissingIds(freq, isoforms.idIterator());
@@ -477,10 +484,10 @@ public class Startup {
                 ArrayList<IsoformList> super_igor_isoform_list = new ArrayList<IsoformList>();
                 for (int jj = 0; jj < clusters.get(ii).size(); jj ++) {
                     ArrayIsoformList aiso = (ArrayIsoformList) (clusters.get(ii).get(jj));
-                    String readName = aiso.readName;
-                    if (bootMultiplicities.get(readName) > 0) {
+                    String aisoName = Integer.toString(ii) + "_" + Integer.toString(jj);
+                    if (bootMultiplicities.get(aisoName) > 0) {
                         ArrayIsoformList new_aiso = new ArrayIsoformList(aiso);
-                        new_aiso.setMultiplicity(bootMultiplicities.get(readName));
+                        new_aiso.setMultiplicity(bootMultiplicities.get(aisoName));
                         super_igor_isoform_list.add(new_aiso);
                     }
                 }

@@ -222,10 +222,10 @@ public class ConfidenceIntervalCalculator {
         public void writeValues(String dirname) {
             writeValues(sortEntriesById(gene_fpkm), dirname + "gene_fpkm_ci");
             writeValues(sortEntriesById(gene_tpm), dirname + "gene_tpm_ci");            
-            writeValues(sortEntriesById(gene_ecpm), dirname + "gene_ecpm_ci");            
+            //writeValues(sortEntriesById(gene_ecpm), dirname + "gene_ecpm_ci");            
             writeValues(sortEntriesById(iso_fpkm), dirname + "iso_fpkm_ci");            
             writeValues(sortEntriesById(iso_tpm), dirname + "iso_tpm_ci");            
-            writeValues(sortEntriesById(iso_ecpm), dirname + "iso_ecpm_ci");            
+            //writeValues(sortEntriesById(iso_ecpm), dirname + "iso_ecpm_ci");            
         }
 
         public List<Map.Entry<String, IntervalTracker>> sortEntriesById(Map<String, IntervalTracker> freq) {
