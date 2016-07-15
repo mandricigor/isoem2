@@ -101,7 +101,9 @@ public class Startup {
                 int confidenceValue = 95;
 
                 boolean has_confidence_value = options.has(OP_CONFIDENCE_VALUE);
-                boolean has_number_bootstraps = options.has(OP_NUMBER_BOOTSTRAPS);
+// sahar always generate 200 bootstrap samples
+//                boolean has_number_bootstraps = options.has(OP_NUMBER_BOOTSTRAPS);
+                boolean has_number_bootstraps = true;
 
                 if (has_confidence_value) {
                     nrConfidenceBootstraps = 200; // Just hardcoded, so what?
@@ -111,7 +113,9 @@ public class Startup {
                     cicalc = new ConfidenceIntervalCalculator(confidenceValue);
                 }
                 if (has_number_bootstraps) {
-                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
+// sahar always generate 200 bootstrap samples
+//                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
+                    nrBootstraps = (int) 200;
                 }
 
                 /*
@@ -121,7 +125,9 @@ public class Startup {
                     cicalc = new ConfidenceIntervalCalculator(confidenceValue);
                 }
                 else if (options.has(OP_NUMBER_BOOTSTRAPS)) {
-                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
+// sahar always generate 200 bootstrap samples
+//                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
+                    nrBootstraps = (int) 200;
                 }
                 */
 
@@ -395,7 +401,13 @@ public class Startup {
 				e.printStackTrace(System.out);
 			}
                     if (has_number_bootstraps) {
-                        createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
+//sahar adding output to the boostrap.gz. needed by isoDE
+			   String [] paths;
+			   paths = new String[2];
+			   paths[0] = oDir + "/" + namePrefix + "/bootstrap/";
+			   paths[1] = oDir + "/" + namePrefix + "/output/";
+//                        createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
+                        createTarGZ(paths, oDir + "/" + namePrefix + "/bootstrap.tar.gz");
                         removeDir(oDir + "/" + namePrefix + "/bootstrap/");
                     }
 		}

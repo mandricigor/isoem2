@@ -636,7 +636,8 @@ public class Utils {
         }
 
 
-        public static void createTarGZ(String dirPath, String tarGzPath) throws FileNotFoundException, IOException {
+//sahar adding output directory to the boostrap.gz. needed by isoDE
+        public static void createTarGZ(String dirPath[], String tarGzPath) throws FileNotFoundException, IOException {
             FileOutputStream fOut = null;
             BufferedOutputStream bOut = null;
             GzipCompressorOutputStream gzOut = null;
@@ -646,7 +647,12 @@ public class Utils {
                 bOut = new BufferedOutputStream(fOut);
                 gzOut = new GzipCompressorOutputStream(bOut);
                 tOut = new TarArchiveOutputStream(gzOut);
-                addFileToTarGz(tOut, dirPath, "");
+//sahar adding output directory to the boostrap.gz. needed by isoDE
+		  for (int k=0; k < dirPath.length; k++) {
+	                addFileToTarGz(tOut, dirPath[k], "");
+//sahar debug
+//                System.err.println("In paths loop");
+		  }
             } finally {
                 tOut.finish();
                 tOut.close();

@@ -1,5 +1,5 @@
 #!/bin/bash
-isoEMDir=/home/software/public_html/IsoEM/isoem-1.1.5
+isoEMDir=/home/projects/isoem2/isoem-b
 
 echo isoem v 1.1.5
 mem=`free | grep -o -e 'Mem:\s*[0-9]*' | grep -o -E '[0-9]+'`

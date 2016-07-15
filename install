@@ -1,16 +1,18 @@
 #!/bin/sh
 
-cd src
-cd isoform-common
-make all
-cd ..
-cd isoform-accuracy
-make all
-cd ..
-cd isoform-em
-make all
-cd ..
-cd ..
+#cd src
+#cd isoform-common
+#make all
+#cd ..
+#cd isoform-accuracy
+#make all
+#cd ..
+#cd isoform-em
+#make all
+#cd ..
+#cd ..
+
+build
 
 rootPath=`pwd`
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-isoEMDir=/home/software/public_html/IsoEM/isoem-1.1.5
+isoEMDir=/home/projects/isoem2/isoem-b
 
 echo isoem v 1.1.5
 if [ $# -ne 3 -a $# -ne 4 ]

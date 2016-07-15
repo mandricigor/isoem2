@@ -13,4 +13,10 @@ cd ..
 cd SimTools
 make all
 cd ..
+cd isoDECalls
+make all
+cd ..
+cd calc
+make all
+cd ..
 cd ..

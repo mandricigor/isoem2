@@ -1,6 +1,6 @@
 #!/bin/sh
 
-isoEMDir=/home/software/public_html/IsoEM/isoem-1.1.5
+isoEMDir=/home/projects/isoem2/isoem-b
 
 if [ $# -ne 4 -a $# -ne 5 ]
 then
