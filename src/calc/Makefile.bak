@@ -1,0 +1,23 @@
+CFLAGS=-g -Wall
+CC=gcc
+AR=ar
+RANLIB=ranlib
+LIBS=-L./ -lcgic
+
+all: clean support.class libcgic.a calc.cgi 
+
+support.class:
+	javac support.java
+
+libcgic.a: cgic.o cgic.h
+	rm -f libcgic.a
+	$(AR) rc libcgic.a cgic.o
+	$(RANLIB) libcgic.a
+
+calc.cgi: calc.o libcgic.a
+	gcc calc.o -o calc.cgi ${LIBS}
+
+
+clean:
+	rm -f *.class *.o *.a calc.cgi 
+

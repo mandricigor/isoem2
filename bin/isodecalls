@@ -1,0 +1,274 @@
+#!/bin/bash
+
+isoEMDir=/home/projects/isoem2/isoem-b
+
+START=$(date +%s)
+
+echo
+
+java -cp ${isoEMDir}/lib/argparse4j-0.4.1.jar:${isoEMDir}/lib/. IsoDE_Parse_Arg_R "$@"
+status=$?
+
+if [ $status -eq 12 ]; then
+        echo "Either m or a must be present, not both! "
+        exit 12
+fi
+
+
+old_IFS="$IFS"
+IFS=$'\n'
+lines=($(<param.txt)) # array
+IFS="$old_IFS"
+
+
+c1=${lines[0]}     #bootstraping dir condition1
+c2=${lines[1]}     #bootstraping dir condition2
+B=${lines[2]}            #bootstrap support (default B = 95)
+DFC=${lines[3]}          #desired Fold Change (default FC=2)
+out=${lines[4]}          #output file
+pair=${lines[5]}         #pairing of ratio: matching or all pair
+
+
+rm param.txt
+#echo "end of parsing arguments"
+
+
+create_merging_directories(){
+ # local variable d and f with passed args	
+	#d=$1/..	#$dirname1
+	d="$(dirname "$1")"
+	ext1=/
+	ext2=$2  #Extension name of directory.eg merge1_c1
+	g1=Genes
+	i1=Isoforms
+	r1=One_run
+	g2=Gene
+	i2=Isoform
+
+  	mkdir $d$ext1$ext2
+
+	# Inside filename_no_DIR
+	
+	merge_dir_Genes=$d$ext1$ext2$ext1$g1
+	mkdir $d$ext1$ext2$ext1$g1
+	mkdir $d$ext1$ext2$ext1$i1
+	mkdir $d$ext1$ext2$ext1$r1
+
+	# Inside One_run
+	merge_dir_1_run_gene=$d$ext1$ext2$ext1$r1$ext1$g2
+	mkdir $d$ext1$ext2$ext1$r1$ext1$g2
+	mkdir $d$ext1$ext2$ext1$r1$ext1$i2
+} 
+
+
+access_directories(){
+# Passed args are sam1_DIR and sam2_DIR
+
+        d1=$1    #$sam1_DIR
+	echo "directory : " $d1
+	k=$2
+	echo "position in set of input directory: " $k
+        ext1=/
+        g_dir=Genes
+        r1=One_run
+        g_one=Gene
+	
+        g1=$d1/$g_dir    #genes estimations for the bootstrap of file1
+		one_run_g1=$d1/$r1$ext1$g_one	#genes estimations for single run of file1
+
+
+	#echo "Get name of the file for one_run genes/isoforms estimates"
+	
+	ls $one_run_g1 > file_temp
+	one_run_g1_est=`cat file_temp`
+	rm file_temp 
+	one_run_g1_est=$one_run_g1$ext1$one_run_g1_est
+
+	# Copy all files into the merged file adding k=index of merge files to differentiate btw files and avoid over-riding
+	# Genes files
+	
+
+	for file in $g1/*; do 
+    		if [[ -f "$file" ]]; then
+			filename1=$(basename $file)
+			filename_no="${filename1%.*}"		# remove extension from file name
+			dirname1="${file%/*}"
+        		cp "$file" "$dirname1/${k}_${filename1}"
+			mv "$dirname1/${k}_${filename1}"  $merge_dir_Genes/
+    		fi
+	done
+
+
+
+	#echo "Finished copying genes fpkm";
+	echo
+
+	# One run files
+		oner=$one_run_g1_est
+		#echo "one run file " $oner 
+		#echo " k is equal to : " $k
+		filename1=$(basename $oner)
+		filename_no="${filename1%.*}"		# remove extension from file name
+		dirname1="${oner%/*}"
+		#echo "new filaneme +k: " ${k}_${filename1}		
+                cp "$oner" "$dirname1/${k}_${filename1}"
+                mv "$dirname1/${k}_${filename1}"  $merge_dir_1_run_gene/
+}
+
+#################################
+# create average FPKM from One run files
+
+create_average_FPKM() {
+# Input arg: directory name where all one run files resides
+#echo "One run dir is: " $1
+echo "The One run files to average are: " 
+dir $1/
+java -cp ${isoEMDir}/lib/. Compute_FPKM_Average "$1/"
+
+#for x in  $1/*
+#do
+#        if [ "$x" != "average.gene_estimates" ]
+#        then
+#                rm -f $x;
+#        fi
+#done;
+
+rm -f $1/*
+mv average.gene_estimates $1/
+}
+
+
+# Merge all bootstrap dir from condition1 into one dir
+
+
+# Let consider the following parameters
+declare -a dir_c1=$c1
+
+# Count the number of sam files given as input
+nber_dir_c1=${#dir_c1[@]}  
+
+# Create merging dir
+b0=${dir_c1[0]}
+if [ -w "$(dirname $b0)" ]; then
+	create_merging_directories $b0 "Bootstrap_Merge1_DIR"
+else 
+	echo " Do not have right permission to create a merge bootstrap directory for condition1 in $b0"
+	continue
+fi
+
+
+
+# "Start merging for c1"
+echo
+echo "Start merging for c1"
+echo "Now copying and averaging One_run files"
+
+	i=1;
+	for b1 in "${dir_c1[@]}";
+	do		
+		echo "Now at position "  $i;
+		access_directories $b1 $i		
+		i=$((i + 1));	
+	done
+	# create gene-fpkm for one run through java: mean of all fpkm using $nber_dir_c1
+echo "c1: DONE !!!!"
+echo
+
+# echo "Name of the merging bootstrap directories for condition 1 is: " 
+parentdir="$(dirname "$b0")"
+#echo "parent dir: " $parentdir
+final_c1=${parentdir}/Bootstrap_Merge1_DIR
+#echo "condition2: " $final_c1
+
+#########################################
+# Average One run files
+
+create_average_FPKM  $final_c1/One_run/Gene
+
+echo
+echo "Name of the merging bootstrap directories for condition 1 is: : " $final_c1
+
+echo
+echo
+echo
+
+
+
+
+#####################################################################
+
+
+
+
+# Merge all bootstrap dir from condition2 into one dir
+
+
+# Let consider the following parameters
+declare -a dir_c2=$c2
+
+# Count the number of sam files given as input
+nber_dir_c2=${#dir_c2[@]}
+
+
+
+# Create merging dir
+b0=${dir_c2[0]}
+if [ -w "$(dirname $b0)" ]; then
+        create_merging_directories $b0 "Bootstrap_Merge2_DIR"
+else
+        echo " Do not have right permission to create a merge bootstrap directory for condition2 in $b0"
+        continue
+fi
+
+
+
+# "Start merging for c1"
+echo
+echo
+echo "Start merging for c2"
+echo "Now copying and averaging One_run files"
+
+        i=1;
+        for b1 in "${dir_c2[@]}";
+        do
+		echo "Now at position " $i;
+                access_directories $b1 $i
+                i=$((i + 1));
+        done
+        # create gene-fpkm for one run through java: mean of all fpkm using $nber_dir_c1
+echo "c2: DONE !!!!"
+echo
+
+
+#echo "Name of the merging bootstrap directories for condition 2 is: "
+parentdir="$(dirname "$b0")"
+#echo "parent dir: " $parentdir
+final_c2=${parentdir}/Bootstrap_Merge2_DIR
+
+#########################################
+# Average One run files
+
+create_average_FPKM  $final_c2/One_run/Gene
+
+echo
+echo "Name of the merging bootstrap directories for condition 2 is: " $final_c2
+
+
+
+
+
+
+
+
+
+
+#call old isoDE with the merged directories 
+
+${isoEMDir}/bin/isoDE_v4.sh $final_c1/ $final_c2/ $B $DFC $out -a  #-$pair
+
+#Sahar changing pair to M (match) for IsoDE2, 200 replicates/match
+#${isoEMDir}/bin/isoDE_v4.sh $final_c1/ $final_c2/ $B $DFC $out -a  -M
+
+
+
+

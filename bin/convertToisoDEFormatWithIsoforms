@@ -1,0 +1,81 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]
+then
+ echo "Usage: convertToisDEFormat isoem2ArchiveFile [outputDirectoryprefix]"
+ return
+fi
+
+pwd
+
+#indir=$1
+#tar zxvf $1
+echo inside converToisoDEFormatWithIsoforms
+echo uncompress archive
+date
+tar zxf $1
+num=`ls bootstrap | wc -l`
+pwd
+#if [ $# -gt 1 ]
+#then
+outdir=$2
+#else
+#   outdir=${indir}_out
+#fi
+
+echo in ${indir}
+echo out ${outdir} 
+
+#
+
+echo copying files
+date
+
+for type in  tpm fpkm 
+do
+	for type2 in I G
+	do
+
+		mkdir ${outdir}_${type}_${type2}
+		cd ${outdir}_${type}_${type2}
+		mkdir Isoforms
+		mkdir Genes
+		mkdir One_run
+		mkdir One_run/Gene
+		mkdir One_run/Isoform
+		cd ..
+	done
+	for run in $(seq 1 $num);
+	do
+		#prepare for genes isode run
+		#echo inside replicate loop
+		# cp bootstrap/experiment_${run}/Genes/gene_${type}_estimates ${outdir}_${type}_G/Isoforms/result_sam_${run}.iso_estimates	
+		touch ${outdir}_${type}_G/Isoforms/result_sam_${run}.iso_estimates
+		mv bootstrap/experiment_${run}/Genes/gene_${type}_estimates ${outdir}_${type}_G/Genes/result_sam_${run}.gene_estimates
+
+		#prepare for isoforms isode run
+		#cp bootstrap/experiment_${run}/Isoforms/iso_${type}_estimates ${outdir}_${type}_I/Isoforms/result_sam_${run}.iso_estimates	
+		touch ${outdir}_${type}_I/Isoforms/result_sam_${run}.iso_estimates
+		mv bootstrap/experiment_${run}/Isoforms/iso_${type}_estimates ${outdir}_${type}_I/Genes/result_sam_${run}.gene_estimates
+	done
+	#prepare for genes isode run
+		#echo after replicate loop
+	# cp output/Genes/gene_${type}_estimates ${outdir}_${type}_G/One_run/Isoform/sam_output.iso_estimates
+	touch ${outdir}_${type}_G/One_run/Isoform/sam_output.iso_estimates
+	mv output/Genes/gene_${type}_estimates ${outdir}_${type}_G/One_run/Gene/sam_output.gene_estimates
+
+	#prepare for isoforms isode run
+	# cp output/Isoforms/iso_${type}_estimates ${outdir}_${type}_I/One_run/Isoform/sam_output.iso_estimates
+	touch ${outdir}_${type}_I/One_run/Isoform/sam_output.iso_estimates
+	mv output/Isoforms/iso_${type}_estimates ${outdir}_${type}_I/One_run/Gene/sam_output.gene_estimates
+
+done
+
+echo removing archive files
+date
+rm -fr bootstrap output
+
+
+
+echo done converToisoDEFormatWithIsoforms
+date
