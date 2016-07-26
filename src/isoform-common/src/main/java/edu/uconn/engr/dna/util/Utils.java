@@ -15,6 +15,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
@@ -663,6 +665,26 @@ public class Utils {
 
         }
 
+        public static boolean checkForSingleEndFiles(List<String> fileNames) throws IOException {
+            boolean singleEndFiles = false; // by default assume we do not have any single end files
+            final int firstFlag = 0x40;
+            final int secondFlag = 0x80;
+            for (String filename: fileNames) {
+                BufferedReader brTest = new BufferedReader(new FileReader(filename));
+                String firstLine = brTest.readLine(); // read the first line of file
+                String[] strArray = firstLine.split(",");
+                int samFlag = Integer.parseInt(strArray[1]);
+                boolean isFirstInPair = (samFlag & firstFlag) != 0; // bit flag 64. see SAM specs
+                boolean isSecondInPair = (samFlag & secondFlag) !=0;
+                if (!(isFirstInPair && isSecondInPair)) {
+                    // it is for sure neither first in a pair, nor second
+                    // therefore, it must be single
+                    singleEndFiles = true;
+                    break;
+                }
+            }
+            return singleEndFiles;
+        }
 
         private static void addFileToTarGz(TarArchiveOutputStream tOut, String path, String base) throws IOException {
             File f = new File(path);

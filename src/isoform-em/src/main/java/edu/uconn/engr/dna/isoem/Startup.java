@@ -20,6 +20,7 @@ import static edu.uconn.engr.dna.util.Utils.sortEntriesById;
 import static edu.uconn.engr.dna.util.Utils.writeValues;
 import static edu.uconn.engr.dna.util.Utils.createTarGZ;
 import static edu.uconn.engr.dna.util.Utils.removeDir;
+import static edu.uconn.engr.dna.util.Utils.checkForSingleEndFiles;
 
 
 /**
@@ -152,17 +153,25 @@ public class Startup {
 
 		CumulativeProbabilityDistribution pd = null;
 		double fragmentLengthMean = -1;
+                boolean isAnySingleEndFile = false;
+                isAnySingleEndFile = checkForSingleEndFiles(samFiles);
 		if (options.has(OP_FRAG_MEAN) && options.has(OP_FRAG_DEV)) {
 			fragmentLengthMean = (Double) options.valueOf(OP_FRAG_MEAN);
 			pd = new NormalProbabilityDistribution(fragmentLengthMean, (Double) options.valueOf(OP_FRAG_DEV), 0);
-		} else if (!options.has(OP_FRAG_DISTRIB_AUTO)) {
+                } else if (!options.has(OP_FRAG_DISTRIB_AUTO)) {
 			System.out.println("Fragment length distribution unknown!");
 			System.out.println("You must specify the fragment length distribution either as mean and std-dev,\n"
 							+ "or ask to be detected automatically by using the option "
 							+ OP_FRAG_DISTRIB_AUTO);
 			System.out.println("Type isoem -h to print help information");
 			System.exit(1);
-		}
+		} else {
+                    if (isAnySingleEndFile) {
+                        System.out.println("You can not use -a option when supplying single end read alignments to IsoEM!");
+                        System.out.println("Type iseom -h to print help information");
+                        System.exit(1);
+                    }
+                }
 
 		TimingTool timer = new TimingTool();
 		timer.start(null);
