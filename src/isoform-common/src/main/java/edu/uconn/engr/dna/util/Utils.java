@@ -469,6 +469,7 @@ public class Utils {
 	    for (String isoform : fpkms.keySet()) {
                 Isoform i = isoforms.getValue(isoform);
                 Double fpkm = fpkms.get(isoform);
+                //System.out.println(isoform);
                 Double fpkmWeightdLength = Math.max(0.001,fpkm) * i.length();
                 result.put(isoform, fpkmWeightdLength);
 		  //System.out.println("fpkm " + fpkm + " length " + i.length() + " weightedLength " + fpkmWeightdLength );
@@ -671,8 +672,11 @@ public class Utils {
             final int secondFlag = 0x80;
             for (String filename: fileNames) {
                 BufferedReader brTest = new BufferedReader(new FileReader(filename));
-                String firstLine = brTest.readLine(); // read the first line of file
-                String[] strArray = firstLine.split(",");
+                String firstLine = "";
+                do {
+                    firstLine = brTest.readLine(); // read the first line of file
+                } while (firstLine.charAt(0) == '@'); // corresponds to comments in SAM files
+                String[] strArray = firstLine.split("\t");
                 int samFlag = Integer.parseInt(strArray[1]);
                 boolean isFirstInPair = (samFlag & firstFlag) != 0; // bit flag 64. see SAM specs
                 boolean isSecondInPair = (samFlag & secondFlag) !=0;

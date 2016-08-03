@@ -40,6 +40,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
         //public List<Map<String, Double>> readAlignmentMapList;
         //public List<String> readNames;
         public String readName;
+        public int bootstrapId;
         //public Map<String, ArrayList<Double>> weightMap;
 
 	public ArrayIsoformList(String[] name, double[] weight) {
@@ -58,6 +59,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
                 //}
                 //readNames = new ArrayList<String>();
                 readName = null;
+                bootstrapId = 0;
                 //this.weightMap = new HashMap<String, ArrayList<Double>>();
 	}
 
@@ -78,6 +80,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
             //    this.weightMap.put(entry.getKey(), new_weights);
             //}
             this.h = another.h;
+            this.bootstrapId = another.bootstrapId;
         }
 
 

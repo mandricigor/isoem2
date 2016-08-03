@@ -32,6 +32,11 @@ public class FastWeightedEmAlgorithm implements EMAlgorithm {
 	public Map<Object, Double> computeFrequencies(List<IsoformList> readClasses) {
 		this.steps = 0;
 
+                int bootstrapId = 0;
+                if (readClasses.size() > 0) {
+                    bootstrapId = ((ArrayIsoformList) readClasses.get(0)).bootstrapId;
+                }
+
 		PreprocData d = new PreprocData(readClasses);
 
 		int nDistinctIsoforms = d.freq.length;
@@ -104,6 +109,7 @@ public class FastWeightedEmAlgorithm implements EMAlgorithm {
 			}
 			i++;
 		}
+                d.isoforms.put("bootstrapId", (double)bootstrapId);
 		return (Map) d.isoforms;
 	}
 

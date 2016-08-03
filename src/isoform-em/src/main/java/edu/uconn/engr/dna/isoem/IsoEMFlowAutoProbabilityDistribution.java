@@ -53,7 +53,7 @@ public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
 
 
     @Override
-    public Map<String, Double> computeFpkms(List<List<IsoformList>> clusters) throws Exception {
+    public List<Map<String, Double>> computeFpkms(List<List<IsoformList>> clusters, int nrBootIterations) throws Exception {
         log.debug("Reads after compact: "
                 + t.countReads2(clusters) + " in "
                 + t.countReadClasses(clusters) + " readClasses;"
@@ -62,11 +62,15 @@ public class IsoEMFlowAutoProbabilityDistribution implements IsoEMFlow {
 		System.out.println("Reads after processing quality scores: " + CoordToIsoformListForAlignmentsParameterRunnable2.totalNReads);
 		System.out.println("Reads after computing compatibilities: " + AlignmentToReadConverter.totalReads);
 		System.out.println("Reads that go into EM (possibly scaled if bias correction is enabled): " + t.countReads2(clusters));
-        Map<String, Double> result;
+        List<Map<String, Double>> result;
         Map<String, Double> adjustedWeights =  t.createAdjustedIsoLengths(pd);
-        Map<String, Double> map = t.runEM(clusters, adjustedWeights);
+        List<Map<String, Double>> map = t.runEM(clusters, adjustedWeights, nrBootIterations);
         if (!t.isReportCounts()) {
-                result = EmUtils.fpkm(map, adjustedWeights);
+                result = new ArrayList<Map<String, Double>> ();
+                for (Map<String, Double> bMap: map) {
+                    Map<String, Double> bootResult = EmUtils.fpkm(bMap, adjustedWeights);
+                    result.add(bootResult);
+                }
         } else {
                 result = map;
         }
