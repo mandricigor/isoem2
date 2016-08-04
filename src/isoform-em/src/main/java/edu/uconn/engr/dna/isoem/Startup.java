@@ -13,7 +13,9 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
+import edu.uconn.engr.dna.isoem.processor.*;
 import static edu.uconn.engr.dna.isoem.IsoEmOptionParser.*;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesDesc;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesById;
@@ -40,17 +42,6 @@ public class Startup {
 
 	public Startup() {
 	}
-
-
-        public static int generateRandomNber(int aStart, int aEnd){
-                Random random = new Random();
-            long range = (long)aEnd - (long)aStart + 1; //get the range, casting to long to avoid overflow problems         
-            long fraction = (long)(range * random.nextDouble()); // compute a fraction of the range, 0 <= frac < range
-            int randomNumber =  (int)(fraction + aStart);
-            return randomNumber;
-        }
-
-
 
 
 	public static void main(String[] argsList) throws Exception {
@@ -116,7 +107,7 @@ public class Startup {
                 if (has_number_bootstraps) {
 // sahar always generate 200 bootstrap samples
 //                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
-                    nrBootstraps = (int) 200;
+                    nrBootstraps = (int) 50;
                 }
 
                 /*
@@ -304,11 +295,26 @@ public class Startup {
                                 long startTime = System.currentTimeMillis();
 
 
-                                for (int iv = 1; iv <= nrIterations; iv ++) {
-                                    igor_clusters = doBootstrapClusters(clusters2, bootCount, multiplicities, bootArray, iv);
-                                    new_clusters.addAll(igor_clusters);
+                                int cores = Runtime.getRuntime().availableProcessors();
+                                int nThreads = cores <= 2 ? 2 : cores - 1;
+
+                                List<Integer> bootIterationIds = new ArrayList<Integer>();
+                                for (int bItId = 1; bItId <= nrIterations; bItId ++) {
+                                    bootIterationIds.add(bItId);
                                 }
 
+                                List<List<List<IsoformList>>> bootClusters = BatchThreadPoolExecutor.newInstance(nThreads,
+                                                new ArrayBlockingQueue<Integer>(Math.max(100, 10 * nThreads)),
+                                                ParameterRunnableFactory.instance(BootParameterRunnable.class, clusters2, bootCount, multiplicities, bootArray),
+                                                false).processAll(bootIterationIds).waitForTermination();
+                                for (List bootBatchCluster: bootClusters) {
+                                    new_clusters.addAll(bootBatchCluster);
+                                }
+                                /*
+                                for (int iv = 1; iv <= nrIterations; iv ++) {
+                                    doBootstrapClusters(clusters2, new_clusters, bootCount, multiplicities, bootArray, iv);
+                                }
+                                */
 
                                 long startEMtime = System.currentTimeMillis();
                                 System.out.println(startEMtime - startTime);
@@ -317,6 +323,7 @@ public class Startup {
 
 
 
+				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
 				List<Map<String, Double>> freq = flow.computeFpkms(new_clusters, nrIterations);
 
                                 for (Map<String, Double> fr: freq) {
@@ -340,7 +347,6 @@ public class Startup {
                                     }
                                 }
 
-				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
 
                                 List<Map<String, Double>> geneFreq = new ArrayList<Map<String, Double>>();
                                 List<Map<String, Double>> geneTpms = new ArrayList<Map<String, Double>>();
@@ -413,7 +419,6 @@ public class Startup {
 
 				timer.stop();
 				log.debug("Total time " + timer.getGlobalTime());
-                                System.out.println(System.currentTimeMillis() - startEMtime);
 				System.out.printf("Done. (%.2fs)\n",
 								timer.getGlobalTime() / 1000.0);
                                 //} // END OF BOOTSTRAP LOOPS
@@ -504,36 +509,6 @@ public class Startup {
 		System.out.println("=================================");
 	}
 
-
-        public static List<List<IsoformList>> doBootstrapClusters(List<List<IsoformList>> clusters, int bCount, Map<String, Integer> m, List<String> bootArray, int bootIteration) {
-            // map m stands for multiplicities of each read
-            Map<String, Integer> bootMultiplicities = new HashMap<String, Integer>();
-            for (Map.Entry<String, Integer> entry: m.entrySet()) {
-                bootMultiplicities.put(entry.getKey(), 0);
-            }
-            for (int k = 0; k < bCount; k ++) {
-                int p = generateRandomNber(0, bCount - 1);
-                String pickedRead = bootArray.get(p);
-                int currentCount = bootMultiplicities.get(pickedRead);
-                bootMultiplicities.put(pickedRead, currentCount + 1);
-            }
-            List<List<IsoformList>> new_clusters = new ArrayList<List<IsoformList>>();
-            for (int ii = 0; ii < clusters.size(); ii ++) {
-                ArrayList<IsoformList> super_igor_isoform_list = new ArrayList<IsoformList>();
-                for (int jj = 0; jj < clusters.get(ii).size(); jj ++) {
-                    ArrayIsoformList aiso = (ArrayIsoformList) (clusters.get(ii).get(jj));
-                    String aisoName = Integer.toString(ii) + "_" + Integer.toString(jj);
-                    if (bootMultiplicities.get(aisoName) > 0) {
-                        ArrayIsoformList new_aiso = new ArrayIsoformList(aiso);
-                        new_aiso.setMultiplicity(bootMultiplicities.get(aisoName));
-                        new_aiso.bootstrapId = bootIteration;
-                        super_igor_isoform_list.add(new_aiso);
-                    }
-                }
-                new_clusters.add(super_igor_isoform_list);
-            }
-            return new_clusters;
-        }
 
 
 // sahar
