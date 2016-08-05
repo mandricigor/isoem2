@@ -107,7 +107,7 @@ public class Startup {
                 if (has_number_bootstraps) {
 // sahar always generate 200 bootstrap samples
 //                    nrBootstraps = (int) options.valueOf(OP_NUMBER_BOOTSTRAPS);
-                    nrBootstraps = (int) 50;
+                    nrBootstraps = (int) 200;
                 }
 
                 /*
@@ -324,46 +324,26 @@ public class Startup {
 
 
 				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
+                                // Start these EMs
 				List<Map<String, Double>> freq = flow.computeFpkms(new_clusters, nrIterations);
 
-                                for (Map<String, Double> fr: freq) {
-                                    EmUtils.addMissingIds(fr, isoforms.idIterator());
-                                }
 
                                 List<Map<String, Double>> tpms = new ArrayList<Map<String, Double>>();
-                                for (Map<String, Double> fr: freq) {
-                                    Map<String, Double> tpm = EmUtils.computeTpms(fr);
-                                    tpms.add(tpm);
-                                }
+                                List<Map<String, Double>> geneFreq = new ArrayList<Map<String, Double>>();
+                                List<Map<String, Double>> geneTpms = new ArrayList<Map<String, Double>>();
 
+                                computeThreeOthers(freq, tpms, geneFreq, geneTpms, isoforms, clusters, isoformToClusterMap);
 
 
                                 if (has_confidence_value) {
-                                    for (Map<String, Double> fr: freq) {
-                                        cicalc.updateIsoFpkm(fr);
-                                    }
-                                    for (Map<String, Double> tpm: tpms) {
-                                        cicalc.updateIsoTpm(tpm);
-                                    }
-                                }
-
-
-                                List<Map<String, Double>> geneFreq = new ArrayList<Map<String, Double>>();
-                                List<Map<String, Double>> geneTpms = new ArrayList<Map<String, Double>>();
-                                for (int x = 0; x <= nrIterations; x ++) {
-                                    Map<String, Double> fpkm_weigthedGeneLengths = Utils.fpkmWeigthedGeneLengths(freq.get(x),isoforms, isoformToClusterMap);
-				    Map<String, Double> fr = Utils.groupByCluster(freq.get(x), isoformToClusterMap);
-				    EmUtils.addMissingIds(fr, clusters.idIterator());
-
-                                    Map<String, Double> tpm = EmUtils.computeTpms(fr);
-
-                                    geneFreq.add(fr);
-                                    geneTpms.add(tpm);
-                                    if (has_confidence_value) {
-                                        cicalc.updateGeneFpkm(fr);
-                                        cicalc.updateGeneTpm(tpm);
+                                    for (int iv = 0; iv < freq.size(); iv ++) {
+                                        cicalc.updateIsoFpkm(freq.get(iv));
+                                        cicalc.updateIsoTpm(tpms.get(iv));
+                                        cicalc.updateGeneFpkm(geneFreq.get(iv));
+                                        cicalc.updateGeneTpm(geneTpms.get(iv));
                                     }
                                 }
+
 
                                 namePrefix = samReadsFile.replace(".sam.gz", "");
                                 namePrefix = namePrefix.replace(".sam", "");
@@ -433,16 +413,39 @@ public class Startup {
 			}
                     if (has_number_bootstraps) {
 //sahar adding output to the boostrap.gz. needed by isoDE
-			   String [] paths;
-			   paths = new String[2];
-			   paths[0] = oDir + "/" + namePrefix + "/bootstrap/";
-			   paths[1] = oDir + "/" + namePrefix + "/output/";
-//                        createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
+			String [] paths;
+			paths = new String[2];
+			paths[0] = oDir + "/" + namePrefix + "/bootstrap/";
+			paths[1] = oDir + "/" + namePrefix + "/output/";
+//                      createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
                         createTarGZ(paths, oDir + "/" + namePrefix + "/bootstrap.tar.gz");
                         removeDir(oDir + "/" + namePrefix + "/bootstrap/");
                     }
 		}
 	}
+
+
+        private static void computeThreeOthers(List<Map<String, Double>> freq, List<Map<String, Double>> tpms, List<Map<String, Double>> geneFreq, List<Map<String, Double>> geneTpms, Isoforms isoforms, Clusters clusters, Map<String, String> isoformToClusterMap) {
+            int nrIterations = freq.size();
+            for (int x = 0; x < nrIterations; x ++) {
+
+                Map<String, Double> fr = freq.get(x);
+                EmUtils.addMissingIds(fr, isoforms.idIterator());
+
+                Map<String, Double> tpm = EmUtils.computeTpms(fr);
+                tpms.add(tpm);
+                
+                Map<String, Double> fpkm_weigthedGeneLengths = Utils.fpkmWeigthedGeneLengths(fr, isoforms, isoformToClusterMap);
+	        Map<String, Double> geneFr = Utils.groupByCluster(fr, isoformToClusterMap);
+	        EmUtils.addMissingIds(geneFr, clusters.idIterator());
+
+                Map<String, Double> geneTpm = EmUtils.computeTpms(geneFr);
+
+                geneFreq.add(geneFr);
+                geneTpms.add(geneTpm);
+            }
+        }
+
 
 	private static Pair<Map<String, List<Integer>>, Map<String, List<Integer>>> getRepeats(String repeatsGTF) throws Exception {
 		GTFParser repeatsParser = new GTFParser(true);
