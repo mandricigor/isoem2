@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -671,11 +672,33 @@ public class Utils {
             final int firstFlag = 0x40;
             final int secondFlag = 0x80;
             for (String filename: fileNames) {
-                BufferedReader brTest = new BufferedReader(new FileReader(filename));
                 String firstLine = "";
-                do {
-                    firstLine = brTest.readLine(); // read the first line of file
-                } while (firstLine.charAt(0) == '@'); // corresponds to comments in SAM files
+                if ("stdinSample".equals(filename)) {
+                    String line = "";
+                    int ch;
+                    while ((ch = System.in.read()) != -1) {
+                        if (ch != '\n') {
+                            line += (char) ch;
+                        }
+                        else {
+                            // we've built a line - process it
+                            if (line.charAt(0) == '@') {
+                                line = "";
+                            }
+                            else {
+                                firstLine = line;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else {
+                    BufferedReader brTest = new BufferedReader(new FileReader(filename));
+                    //String firstLine = "";
+                    do {
+                        firstLine = brTest.readLine(); // read the first line of file
+                    } while (firstLine.charAt(0) == '@'); // corresponds to comments in SAM files
+                }
                 String[] strArray = firstLine.split("\t");
                 int samFlag = Integer.parseInt(strArray[1]);
                 boolean isFirstInPair = (samFlag & firstFlag) != 0; // bit flag 64. see SAM specs
