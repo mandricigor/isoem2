@@ -703,7 +703,7 @@ public class Utils {
                 int samFlag = Integer.parseInt(strArray[1]);
                 boolean isFirstInPair = (samFlag & firstFlag) != 0; // bit flag 64. see SAM specs
                 boolean isSecondInPair = (samFlag & secondFlag) !=0;
-                if (!(isFirstInPair && isSecondInPair)) {
+                if (!(isFirstInPair || isSecondInPair)) {
                     // it is for sure neither first in a pair, nor second
                     // therefore, it must be single
                     singleEndFiles = true;
