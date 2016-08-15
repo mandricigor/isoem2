@@ -13,7 +13,9 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
+import edu.uconn.engr.dna.isoem.processor.*;
 import static edu.uconn.engr.dna.isoem.IsoEmOptionParser.*;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesDesc;
 import static edu.uconn.engr.dna.util.Utils.sortEntriesById;
@@ -40,17 +42,6 @@ public class Startup {
 
 	public Startup() {
 	}
-
-
-        public static int generateRandomNber(int aStart, int aEnd){
-                Random random = new Random();
-            long range = (long)aEnd - (long)aStart + 1; //get the range, casting to long to avoid overflow problems         
-            long fraction = (long)(range * random.nextDouble()); // compute a fraction of the range, 0 <= frac < range
-            int randomNumber =  (int)(fraction + aStart);
-            return randomNumber;
-        }
-
-
 
 
 	public static void main(String[] argsList) throws Exception {
@@ -292,37 +283,68 @@ public class Startup {
                                         }
                                     }
                                 }
-                                List<List<IsoformList>> new_clusters;
+                                List<List<IsoformList>> new_clusters, igor_clusters;
+
 
                                 int nrIterations = (nrBootstraps > nrConfidenceBootstraps)? nrBootstraps: nrConfidenceBootstraps;
-                                for (int bootIteration = 0; bootIteration <= nrIterations; bootIteration ++) {  // MAIN BOOTSTRAP FOR LOOP
-                                if (bootIteration > 0) {
-                                    new_clusters = doBootstrapClusters(clusters2, bootCount, multiplicities, bootArray);
-                                }
-                                else {
-                                    new_clusters = clusters2;
+
+
+                                new_clusters = new ArrayList<List<IsoformList>>();
+                                new_clusters.addAll(clusters2);
+
+                                long startTime = System.currentTimeMillis();
+
+
+                                int cores = Runtime.getRuntime().availableProcessors();
+                                int nThreads = cores <= 2 ? 2 : cores - 1;
+
+                                List<Integer> bootIterationIds = new ArrayList<Integer>();
+                                for (int bItId = 1; bItId <= nrIterations; bItId ++) {
+                                    bootIterationIds.add(bItId);
                                 }
 
-                                int bootCount2 = 0;
-                                for (int ii = 0; ii < new_clusters.size(); ii ++) {
-                                    for (int jj = 0; jj < new_clusters.get(ii).size(); jj ++) {
-                                        ArrayIsoformList aiso = (ArrayIsoformList) (new_clusters.get(ii).get(jj));
-                                        bootCount2 += aiso.getMultiplicity();
-                                    }
+                                List<List<List<IsoformList>>> bootClusters = BatchThreadPoolExecutor.newInstance(nThreads,
+                                                new ArrayBlockingQueue<Integer>(Math.max(100, 10 * nThreads)),
+                                                ParameterRunnableFactory.instance(BootParameterRunnable.class, clusters2, bootCount, multiplicities, bootArray),
+                                                false).processAll(bootIterationIds).waitForTermination();
+                                for (List bootBatchCluster: bootClusters) {
+                                    new_clusters.addAll(bootBatchCluster);
                                 }
+                                /*
+                                for (int iv = 1; iv <= nrIterations; iv ++) {
+                                    doBootstrapClusters(clusters2, new_clusters, bootCount, multiplicities, bootArray, iv);
+                                }
+                                */
 
-				Map<String, Double> freq = flow.computeFpkms(new_clusters);
-				EmUtils.addMissingIds(freq, isoforms.idIterator());
-                                Map<String, Double> tpms = EmUtils.computeTpms(freq);                  
+                                long startEMtime = System.currentTimeMillis();
+                                System.out.println(startEMtime - startTime);
+
+
+
+
+
+				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
+                                // Start these EMs
+				List<Map<String, Double>> freq = flow.computeFpkms(new_clusters, nrIterations);
+
+
+                                List<Map<String, Double>> tpms = new ArrayList<Map<String, Double>>();
+                                List<Map<String, Double>> geneFreq = new ArrayList<Map<String, Double>>();
+                                List<Map<String, Double>> geneTpms = new ArrayList<Map<String, Double>>();
+
+                                computeThreeOthers(freq, tpms, geneFreq, geneTpms, isoforms, clusters, isoformToClusterMap);
 
 
                                 if (has_confidence_value) {
-                                    cicalc.updateIsoFpkm(freq);
-                                    cicalc.updateIsoTpm(tpms);
+                                    for (int iv = 0; iv < freq.size(); iv ++) {
+                                        cicalc.updateIsoFpkm(freq.get(iv));
+                                        cicalc.updateIsoTpm(tpms.get(iv));
+                                        cicalc.updateGeneFpkm(geneFreq.get(iv));
+                                        cicalc.updateGeneTpm(geneTpms.get(iv));
+                                    }
                                 }
 
 
-                                // get the basename of the .sam reads file
                                 namePrefix = samReadsFile.replace(".sam.gz", "");
                                 namePrefix = namePrefix.replace(".sam", "");
                                 int indexOfLastSlash = namePrefix.lastIndexOf("/");
@@ -340,66 +362,46 @@ public class Startup {
 
                                 String geneOutputCiFileName;
                                 String geneTpmCiFileName;
-                                // ----------------------------------------
 
 
                                 String isoCommonName;
                                 String geneCommonName;
 
-                                if (bootIteration == 0) {
-                                    isoCommonName = oDir + "/" + namePrefix + "/output/Isoforms/";
-                                    geneCommonName = oDir + "/" + namePrefix + "/output/Genes/";
-                                }
-                                else { // this is a simple bootstrap iteration
-                                    isoCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Isoforms/";
-                                    geneCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Genes/";
-                                }
-                                isoOutputFileName = isoCommonName + "iso_fpkm_estimates";
-                                isoTpmFileName = isoCommonName + "iso_tpm_estimates";
+                                for (int bootIteration = 0; bootIteration <= nrIterations; bootIteration ++) {
+                                    if (bootIteration == 0) {
+                                        isoCommonName = oDir + "/" + namePrefix + "/output/Isoforms/";
+                                        geneCommonName = oDir + "/" + namePrefix + "/output/Genes/";
+                                    }
+                                    else { // this is a simple bootstrap iteration
+                                        isoCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Isoforms/";
+                                        geneCommonName = oDir + "/" + namePrefix + "/bootstrap/experiment_" + bootIteration + "/Genes/";
+                                    }
+                                    isoOutputFileName = isoCommonName + "iso_fpkm_estimates";
+                                    isoTpmFileName = isoCommonName + "iso_tpm_estimates";
 
-                                geneOutputFileName = geneCommonName + "gene_fpkm_estimates";
-                                geneTpmFileName = geneCommonName + "gene_tpm_estimates";
+                                    geneOutputFileName = geneCommonName + "gene_fpkm_estimates";
+                                    geneTpmFileName = geneCommonName + "gene_tpm_estimates";
 
 
-                                if ((bootIteration == 0) || (bootIteration < nrBootstraps)) {
                                     // writing fpkms for isoforms
-				    System.out.println("Writing isoform FPKMs to "
-								+ isoOutputFileName);
-				    writeValues(sortEntriesById(freq), isoOutputFileName);
-
+				    writeValues(sortEntriesById(freq.get(bootIteration)), isoOutputFileName);
                                     // writing tmps for isoforms
-				    System.out.println("Writing isoform TPMs to "
-								+ isoTpmFileName);
-				    writeValues(sortEntriesById(tpms), isoTpmFileName);
-                                }
-                                //----------------------------------
-				Map<String, String> isoformToClusterMap = Utils.createIsoformToClusterMap(isoforms, clusters);
-                                Map<String, Double> fpkm_weigthedGeneLengths = Utils.fpkmWeigthedGeneLengths(freq,isoforms, isoformToClusterMap);
-				freq = Utils.groupByCluster(freq, isoformToClusterMap);
-				EmUtils.addMissingIds(freq, clusters.idIterator());
-
-                                tpms = EmUtils.computeTpms(freq);
-
-                                if (has_confidence_value) {
-                                    cicalc.updateGeneFpkm(freq);
-                                    cicalc.updateGeneTpm(tpms);
-                                }
-
-                                if ((bootIteration == 0) || (bootIteration < nrBootstraps)) {
+				    writeValues(sortEntriesById(tpms.get(bootIteration)), isoTpmFileName);
                                     // writing fpkms for genes
-				    System.out.println("Writing gene FPKMs to "
-								+ geneOutputFileName);
-				    writeValues(sortEntriesById(freq), geneOutputFileName);
+				    writeValues(sortEntriesById(geneFreq.get(bootIteration)), geneOutputFileName);
                                     // writing tpms for genes
-				    System.out.println("Writing gene TPMs to "
-								+ geneTpmFileName);
-				    writeValues(sortEntriesById(tpms), geneTpmFileName);
+				    writeValues(sortEntriesById(geneTpms.get(bootIteration)), geneTpmFileName);
                                 }
+
+
+
+                                // get the basename of the .sam reads file
+
 				timer.stop();
 				log.debug("Total time " + timer.getGlobalTime());
 				System.out.printf("Done. (%.2fs)\n",
 								timer.getGlobalTime() / 1000.0);
-                                }
+                                //} // END OF BOOTSTRAP LOOPS
                             // now we have to compute the confidence intervals if any and to reset the cicalc
                             if (has_confidence_value) {
                                 String dirname = oDir + "/" + namePrefix + "/output/ConfidenceIntervals/";
@@ -411,16 +413,39 @@ public class Startup {
 			}
                     if (has_number_bootstraps) {
 //sahar adding output to the boostrap.gz. needed by isoDE
-			   String [] paths;
-			   paths = new String[2];
-			   paths[0] = oDir + "/" + namePrefix + "/bootstrap/";
-			   paths[1] = oDir + "/" + namePrefix + "/output/";
-//                        createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
+			String [] paths;
+			paths = new String[2];
+			paths[0] = oDir + "/" + namePrefix + "/bootstrap/";
+			paths[1] = oDir + "/" + namePrefix + "/output/";
+//                      createTarGZ(oDir + "/" + namePrefix + "/bootstrap/", oDir + "/" + namePrefix + "/bootstrap.tar.gz");
                         createTarGZ(paths, oDir + "/" + namePrefix + "/bootstrap.tar.gz");
                         removeDir(oDir + "/" + namePrefix + "/bootstrap/");
                     }
 		}
 	}
+
+
+        private static void computeThreeOthers(List<Map<String, Double>> freq, List<Map<String, Double>> tpms, List<Map<String, Double>> geneFreq, List<Map<String, Double>> geneTpms, Isoforms isoforms, Clusters clusters, Map<String, String> isoformToClusterMap) {
+            int nrIterations = freq.size();
+            for (int x = 0; x < nrIterations; x ++) {
+
+                Map<String, Double> fr = freq.get(x);
+                EmUtils.addMissingIds(fr, isoforms.idIterator());
+
+                Map<String, Double> tpm = EmUtils.computeTpms(fr);
+                tpms.add(tpm);
+                
+                Map<String, Double> fpkm_weigthedGeneLengths = Utils.fpkmWeigthedGeneLengths(fr, isoforms, isoformToClusterMap);
+	        Map<String, Double> geneFr = Utils.groupByCluster(fr, isoformToClusterMap);
+	        EmUtils.addMissingIds(geneFr, clusters.idIterator());
+
+                Map<String, Double> geneTpm = EmUtils.computeTpms(geneFr);
+
+                geneFreq.add(geneFr);
+                geneTpms.add(geneTpm);
+            }
+        }
+
 
 	private static Pair<Map<String, List<Integer>>, Map<String, List<Integer>>> getRepeats(String repeatsGTF) throws Exception {
 		GTFParser repeatsParser = new GTFParser(true);
@@ -487,85 +512,6 @@ public class Startup {
 		System.out.println("=================================");
 	}
 
-
-        public static List<List<IsoformList>> doBootstrapClusters(List<List<IsoformList>> clusters, int bCount, Map<String, Integer> m, List<String> bootArray) {
-            // map m stands for multiplicities of each read
-            Map<String, Integer> bootMultiplicities = new HashMap<String, Integer>();
-            for (Map.Entry<String, Integer> entry: m.entrySet()) {
-                bootMultiplicities.put(entry.getKey(), 0);
-            }
-            for (int k = 0; k < bCount; k ++) {
-                int p = generateRandomNber(0, bCount - 1);
-                String pickedRead = bootArray.get(p);
-                int currentCount = bootMultiplicities.get(pickedRead);
-                bootMultiplicities.put(pickedRead, currentCount + 1);
-            }
-            List<List<IsoformList>> new_clusters = new ArrayList<List<IsoformList>>();
-            for (int ii = 0; ii < clusters.size(); ii ++) {
-                ArrayList<IsoformList> super_igor_isoform_list = new ArrayList<IsoformList>();
-                for (int jj = 0; jj < clusters.get(ii).size(); jj ++) {
-                    ArrayIsoformList aiso = (ArrayIsoformList) (clusters.get(ii).get(jj));
-                    String aisoName = Integer.toString(ii) + "_" + Integer.toString(jj);
-                    if (bootMultiplicities.get(aisoName) > 0) {
-                        ArrayIsoformList new_aiso = new ArrayIsoformList(aiso);
-                        new_aiso.setMultiplicity(bootMultiplicities.get(aisoName));
-                        super_igor_isoform_list.add(new_aiso);
-                    }
-                }
-                new_clusters.add(super_igor_isoform_list);
-            }
-            return new_clusters;
-        }
-
-
-
-
-        /*
-        public static List<List<IsoformList>> doBootstrapClusters(List<List<IsoformList>> clusters, int bootCount){
-            List<List<IsoformList>> new_clusters = new ArrayList<List<IsoformList>>();
-            int[] count = new int[bootCount];
-            // initialize count array
-            for (int j = 0; j < count.length; j++)
-                count[j] = 0;
-            // generate number of copies for each read
-            for (int j = 0; j < count.length; j++)
-                count[generateRandomNber(0, bootCount - 1)]++;
-            // Now it is time to recompute the weights for each IsoformList
-            int bootCounter = 0;
-            for (int ii = 0; ii < clusters.size(); ii ++) {
-                ArrayList<IsoformList> super_igor_isoform_list = new ArrayList<IsoformList>();
-                for (int jj = 0; jj < clusters.get(ii).size(); jj ++) {
-                    // This is the actual bootstrap
-                    ArrayIsoformList aiso = (ArrayIsoformList) (clusters.get(ii).get(jj));
-                    ArrayIsoformList aiso2 = new ArrayIsoformList(aiso);
-                    HashMap<String, Double> aiosMap = new HashMap<String, Double>();
-                    for (Map.Entry<String, ArrayList<Double>> entry : aiso2.weightMap.entrySet()) {
-                        double sumBootWeight = 0;
-                        for (int kk = 0; kk < entry.getValue().size(); kk ++) {
-                            sumBootWeight += count[bootCounter++] * entry.getValue().get(kk);
-                        }
-                        aiosMap.put(entry.getKey(), sumBootWeight);
-                    }
-                    // Now we have to recompute the weights for each entry of the IsoformList by normalization 
-                    double sumWeight = 0;
-                    for (Map.Entry<String, Double> entry : aiosMap.entrySet()) {
-                        sumWeight += entry.getValue();
-                    }
-                    for (Map.Entry<String, Double> entry : aiosMap.entrySet()) {
-                        aiosMap.put(entry.getKey(), entry.getValue() / sumWeight); // Now I normalized everything in the IsoformList
-                    }
-                    for (IsoformList.Entry e : aiso2.entrySet()) {
-                        String entryName = e.getKey();
-                        double newWeight = aiosMap.get(entryName);
-                        e.setValue(newWeight);
-                    }
-                    super_igor_isoform_list.add(aiso2);
-                }
-                new_clusters.add(super_igor_isoform_list);
-            }
-            return new_clusters;
-        }
-        */
 
 
 // sahar

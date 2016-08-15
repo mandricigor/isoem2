@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import java.io.Reader;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -44,7 +45,7 @@ public class IsoEmFlowWithKnownProbabilityDistribution implements IsoEMFlow {
 
 
 
-        public Map<String, Double> computeFpkms(List<List<IsoformList>> clusters) throws Exception {
+        public List<Map<String, Double>> computeFpkms(List<List<IsoformList>> clusters, int nrBootIterations) throws Exception {
 		//log.debug("Parser time " + (System.currentTimeMillis() - start));
 		log.debug("Reads after compacting: "
 						+ t.countReads2(clusters) + " in "
@@ -59,10 +60,14 @@ public class IsoEmFlowWithKnownProbabilityDistribution implements IsoEMFlow {
 
 		long start2 = System.currentTimeMillis();
 		Map<String, Double> adjustedWeights =  t.createAdjustedIsoLengths(pd);
-		Map<String, Double> map = t.runEM(clusters, adjustedWeights);
-		Map<String, Double> result;
+		List<Map<String, Double>> map = t.runEM(clusters, adjustedWeights, nrBootIterations);
+		List<Map<String, Double>> result;
 		if (!t.isReportCounts()) {
-			result = EmUtils.fpkm(map, adjustedWeights);
+                    result = new ArrayList<Map<String, Double>> ();
+                    for (Map<String, Double> bMap: map) {
+                        Map<String, Double> bootResult = EmUtils.fpkm(bMap, adjustedWeights);
+                        result.add(bootResult);
+                    }
 		} else {
 			result = map;
 		}

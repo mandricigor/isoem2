@@ -15,6 +15,6 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public interface IsoEMFlow {
-    Map<String, Double> computeFpkms(List<List<IsoformList>> clusters) throws Exception;
+    List<Map<String, Double>> computeFpkms(List<List<IsoformList>> clusters, int nrBootstraps) throws Exception;
     List<List<IsoformList>> computeClusters(Reader inputFile) throws Exception;
 }

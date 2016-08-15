@@ -40,6 +40,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
         //public List<Map<String, Double>> readAlignmentMapList;
         //public List<String> readNames;
         public String readName;
+        public int bootstrapId;
         //public Map<String, ArrayList<Double>> weightMap;
 
 	public ArrayIsoformList(String[] name, double[] weight) {
@@ -58,6 +59,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
                 //}
                 //readNames = new ArrayList<String>();
                 readName = null;
+                bootstrapId = 0;
                 //this.weightMap = new HashMap<String, ArrayList<Double>>();
 	}
 
@@ -66,10 +68,10 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
             this.multiplicity = another.getMultiplicity();
             this.qualityScore = another.getQualityScore();
             this.size = another.size();
-            this.name = new String[another.getName().length];
-            System.arraycopy(another.getName(), 0, this.name, 0, another.getName().length);
-            this.weight = new double[another.getWeight().length];
-            System.arraycopy(another.getWeight(), 0, this.weight, 0, another.getWeight().length);
+            this.name = new String[another.getName2().length];
+            System.arraycopy(another.getName2(), 0, this.name, 0, another.getName2().length);
+            this.weight = new double[another.getWeight2().length];
+            System.arraycopy(another.getWeight2(), 0, this.weight, 0, another.getWeight2().length);
             this.readName = another.readName;
             //this.weightMap = new HashMap<String, ArrayList<Double>>();
             //for (Map.Entry<String, ArrayList<Double>> entry: another.weightMap.entrySet()) {
@@ -78,6 +80,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
             //    this.weightMap.put(entry.getKey(), new_weights);
             //}
             this.h = another.h;
+            this.bootstrapId = another.bootstrapId;
         }
 
 
@@ -298,6 +301,14 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 		return name;
 	}
 
+	public double[] getWeight2() {
+		return weight;
+	}
+	public String[] getName2() {
+		return name;
+	}
+
+
 	private void removeNullsIfNecessary() {
 		if (size < name.length) {
 			int j = 0;
@@ -309,7 +320,7 @@ public class ArrayIsoformList implements IsoformList, Iterable<IsoformList.Entry
 				}
 			}
 			if (j != size) {
-				throw new IllegalStateException("Bug! This should never happen");
+				throw new IllegalStateException("Bug! This should never happen " + readName);
 			}
 			name = Arrays.copyOf(name, j);
 			weight = Arrays.copyOf(weight, j);

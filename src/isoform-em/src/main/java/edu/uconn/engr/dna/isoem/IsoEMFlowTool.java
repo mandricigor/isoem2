@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -107,28 +108,32 @@ public class IsoEMFlowTool {
 	/**
 	 * For each cluster, in parallel, run EM
 	 */
-	protected Map<String, Double> runEM(List<List<IsoformList>> clusters, Map<String, Double> adjustedIsoLengths) throws InterruptedException {
+	protected List<Map<String, Double>> runEM(List<List<IsoformList>> clusters, Map<String, Double> adjustedIsoLengths, int nrBootIterations) throws InterruptedException {
 		long start = System.currentTimeMillis();
 		System.out.println("Running EM...");
 //		Map<Integer, Double> adjustedIntIsoLengths = new HashMap<Integer, Double>();
 //		for (Map.Entry<String, Double> e : adjustedIsoLengths.entrySet()) {
 //			adjustedIntIsoLengths.put(isoforms.getIndexOf(e.getKey()), e.getValue());
 //		}
-		List<Map<Object, Double>> results = BatchThreadPoolExecutor.newInstance(nThreads,
+                //System.out.println("This is the size of clusters: " +  clusters.size());
+		List<List<Map<Object, Double>>> results = BatchThreadPoolExecutor.newInstance(nThreads,
 						new ArrayBlockingQueue<List<IsoformList>>(Math.max(100, 10 * nThreads)),
-						ParameterRunnableFactory.instance(EmParameterRunnable.class, adjustedIsoLengths, runUniq, reportCounts),
+						ParameterRunnableFactory.instance(EmParameterRunnable.class, adjustedIsoLengths, runUniq, reportCounts, nrBootIterations),
 						false).processAll(clusters).waitForTermination();
-		Map<Object, Double> freq = Utils.reduce(results, UniformBinaryOperator.<Object, Double>mapReunion());
-		if (freq == null) {
+                List<Map<Object, Double>> bootFreq = new ArrayList<Map<Object, Double>>();
+                for (int i = 0; i <= nrBootIterations; i ++) {
+                    List<Map<Object, Double>> bootResults = new ArrayList<Map<Object, Double>>();
+                    for (int j = 0; j < results.size(); j ++) {
+                        bootResults.add(results.get(j).get(i));
+                    }
+                    Map<Object, Double> freq = Utils.reduce(bootResults, UniformBinaryOperator.<Object, Double>mapReunion());
+		    if (freq == null) {
 			freq = new HashMap<Object, Double>();
-		}
-		log.debug("EM " + (System.currentTimeMillis() - start));
-		return (Map)freq;
-//		Map<String, Double> result = new HashMap<String, Double>();
-//		for (Map.Entry<Object, Double> e : freq.entrySet()) {
-//			result.put(isoforms.getKey((Integer) e.getKey()), e.getValue());
-//		}
-//		return result;
+		    }
+                    bootFreq.add(freq);
+                }
+		//log.debug("EM " + (System.currentTimeMillis() - start));
+		return (List)bootFreq;
 	}
 
 	protected Map<String, Double> createAdjustedIsoLengths(CumulativeProbabilityDistribution pd) {

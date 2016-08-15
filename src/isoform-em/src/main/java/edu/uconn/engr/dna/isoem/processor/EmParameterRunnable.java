@@ -9,6 +9,8 @@ import edu.uconn.engr.dna.util.ParameterRunnable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,29 +19,34 @@ import java.util.Map;
  * Time: 5:56:31 PM
  * To change this template use File | Settings | File Templates.
  */
-public class EmParameterRunnable implements ParameterRunnable<List<IsoformList>, Map<Object, Double>> {
+public class EmParameterRunnable implements ParameterRunnable<List<IsoformList>, List<Map<Object, Double>>> {
     private static final int maxEmSteps = 400;
     private EMAlgorithm emAlgorithm;
-    private Map<Object, Double> map;
+    private List<Map<Object, Double>> map;
 
-    public EmParameterRunnable(Map<Object, Double> adjustedIsoLengths, Boolean runUniq, Boolean reportCounts) {
+    public EmParameterRunnable(Map<Object, Double> adjustedIsoLengths, Boolean runUniq, Boolean reportCounts, Integer nrBootIterations) {
         this.emAlgorithm = new FastWeightedEmAlgorithm(adjustedIsoLengths, maxEmSteps,
                 123, reportCounts);
         if (runUniq) {
             this.emAlgorithm = new EmForUniq(this.emAlgorithm);
         }
-        this.map = new HashMap<Object, Double>();
+        this.map = new ArrayList<Map<Object, Double>>();
+        for (int i = 0; i <= nrBootIterations; i ++) {
+            this.map.add(new HashMap<Object, Double>());
+        }
     }
 
     @Override
     public void run(List<IsoformList> readClasses) {
 //        System.out.println("in EmParameterRunnable readClasses length =");
-				Map<Object, Double> m = emAlgorithm.computeFrequencies(readClasses);
-        map.putAll(m);
+        Map<Object, Double> m = emAlgorithm.computeFrequencies(readClasses);
+        int bootstrapId = m.get("bootstrapId").intValue();
+        m.remove("bootstrapId");
+        map.get(bootstrapId).putAll(m);
     }
 
     @Override
-    public Map<Object, Double> done() {
+    public List<Map<Object, Double>> done() {
         return map;
     }
     
