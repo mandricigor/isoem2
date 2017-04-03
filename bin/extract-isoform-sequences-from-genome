@@ -1,5 +1,6 @@
 #!/bin/bash
-isoEMDir=/home/projects/isoem2/isoem-b
+#isoEMDir=/home/projects/isoem2/isoem-workingversion
+isoEMDir=/galaxy-prod/galaxy/tools-dependencies/bin/isoem2
 
 echo isoem v 1.1.5
 mem=`free | grep -o -e 'Mem:\s*[0-9]*' | grep -o -E '[0-9]+'`
@@ -10,4 +11,4 @@ then
         startMem=-Xms${mem}M
 fi
 				
-java $startMem $maxMem -cp "${isoEMDir}/lib/junit-4.8.1.jar:${isoEMDir}/lib/jopt-simple-3.2.jar:${isoEMDir}/lib/log4j-1.2.14.jar:${isoEMDir}/lib/isoform-common-1.0.jar:${isoEMDir}/lib/isoform-accuracy-1.0:${isoEMDir}/lib/isoform-em-1.0.jar" edu.uconn.engr.dna.format.GenerateKnownGeneSequences $@
+java $startMem $maxMem -cp "${isoEMDir}/lib/commons-compress-1.10.jar:${isoEMDir}/lib/junit-4.8.1.jar:${isoEMDir}/lib/jopt-simple-3.2.jar:${isoEMDir}/lib/log4j-1.2.14.jar:${isoEMDir}/lib/isoform-common-1.0.jar:${isoEMDir}/lib/isoform-accuracy-1.0:${isoEMDir}/lib/isoform-em-1.0.jar" edu.uconn.engr.dna.format.GenerateKnownGeneSequences $@

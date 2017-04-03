@@ -1,51 +1,41 @@
 
-  IsoEM README
+  IsoEM2 README
 
 
 1. Installation:
 ------------
 
-1. Create a isoem2 directory and download the compressed IsoEM2-2.0.0
-   from http://dna.engr.uconn.edu/software/IsoEM/IsoEM2-2.0.0.zip 
+1. Create a isoem2 directory and download the compressed IsoEM2
+   git clone https://github.com/mandricigor/isoem2.git
 
-2. Uncompress IsoEM2-2.0.0.zip into the directory.
-
-3. run the linuz shee script install provided in the compressed file
+3. run the linux shell script install provided in the compressed file
 
 4. [Optional] On windows you might want to add the IsoEM 
    installation directory to the path, such that you can invoke 
-   isoem from any location. On unix you can obtain a similar 
+   isoem from any location. On linux, you can obtain a similar 
    effect by creating a symbolic link to isoem2 and isoDE2 in /usr/local/bin.
 
 
 
 2. Testing your installation:
 --------------------------
+To test the installation of IsoEM1 and IsoDE2, download the and unzip the following compressed archive and follow the instructions in 
+the README file included in the archive.
 
-To test the installation you can download the sample dataset from 
-http://dna.engr.uconn.edu/software/IsoEM/sample.zip 
-and unzip it in the installation directory of IsoEm. First see 
-http://dna.engr.uconn.edu/software/IsoEM/README-SAMPLE.TXT
-file for more details on what the archive provides.
+http://dna.engr.uconn.edu/~software/IsoEM/testdata/IsoEM2IsoDE2-MAQC-Sample.zip
+
 
 
 3. Running IsoEM:
 -----------------
 
-IsoEM takes as input a set of known isoforms in GTF format, and a 
+IsoEM2 takes as input a set of known isoforms in GTF format, and a 
 file with aligned reads in SAM format. The aligned reads MUST be 
 sorted by read name. If not sure, run this command to sort the 
 file:
 
      sort -k 1,1 aligned_reads.sam > aligned_reads_sorted.sam
 
-The output consists of two files: one for isoform frequencies and one
-for gene frequencies. Each line in these files is a pair of isoform/gene
-name and isoform/gene FPKM (Fragments Per Kilobase per Million reads)
-representing the frequencies inferred from the data. The output file
-names are obtained from the sam file name by replacing the .sam extension
-with .iso_estimates and .gene_estimates respectively.They can also be set
-using the -o option.
 
 You can run IsoEm from the command line as follows:
 
@@ -55,10 +45,10 @@ Or, if you run provide read alignments from the standard input:
 
      cat <aligned_reads.sam> | isoem [global options]* [library options]*
 
+
 Mandatory global options:
 ------------------------
 -G, --GTF <GTF file>                    Known genes and isoforms in GTF format
-
 Mandatory library options: either -a or both -m and -d must be present:
 -------------------------
 -m, --fragment-mean <Double>            Fragment length mean
@@ -67,24 +57,22 @@ Mandatory library options: either -a or both -m and -d must be present:
                                           distribution from uniquely mapping
                                           paired reads (DOES NOT WORK FOR
                                           SINGLE READS)
-
 Optional global options:
 -----------------------
 -c, --gene-clusters <Cluster file>      Override isoform to gene mapping
                                           defined in the GTF file with a
                                           mapping taken from the given file.
                                           The format of each line in the file
-                                          is "isoform	gene"
+                                          is "isoform   gene"
 -g <genome fasta file>                  Genome reference sequence (needed by
                                           some library options)
--b                                      Perform hexamer bias correction        
+-b                                      Perform hexamer bias correction
 -h, --help                              Show help
 -r <Repeats GTF>                        Drop alignments falling within
                                           annotated repeats
-
 Optional library options:
 ------------------------
--s, --directed                          Library obtained by directed RNA-Seq   
+-s, --directional                       Dataset obtained by directed RNA-Seq
                                           (the strand of each read is
                                           deterministically chosen: for single
                                           reads, the read always comes from
@@ -92,6 +80,8 @@ Optional library options:
                                           the first read always comes from the
                                           coding strand, the second from the
                                           opposite strand)
+--antisense                             Directional sequencing but the reads
+                                          come from the antisense
 --mate-pairs                            Paired reads come from the same strand
                                           (as opposed to the default behavior
                                           where the two reads in a pair are
@@ -100,38 +90,74 @@ Optional library options:
 --max-mismatches <Integer>              Maximum number of mismatched allowed
                                           for a read. This requires the genome
                                           sequence to be specified (see -g).
-                                          Default: no limit
 -q, --quality-scores                    Weigh the reads based on their quality
                                           scores. This requires the genome
                                           sequence to be specified (see -g).
 --repeat-threshold <nbases>             Drop all reads that have more than
                                           this many bases inside annotated
-                                          repeats. Default: 20
+                                          repeats. Default: 20.
 --polyA <nbases>                        Reads have been generated from mRNAs
                                           with polyA tails of approximately
                                           the given number of bases
--o <file prefix>			Output files prefix. It can include path.
-					  Default: same as sam file name
--O <directory prefix>                   Output directory prefix. If read alignments
-                                          are read from stdin, the default value 
-                                          is stdinSample
--C <confidence interval (%)>            Compute expression of genes/isoforms with
-                                          specified confidence intervals. Provide
-                                          an integer (default: 95, bootstraps: 200)
---endseq                                Disable length normalization for data generated using 5' or 3'
-                                          end-sequencing protocols, which generate a single
-                                          fragment per cDNA molecule
+-o <file prefix>                        Output files prefix. It can include
+                                          path. Default: same as sam file name
+-O <directory prefix>                   Output directory prefix. If read
+                                          alignments are read from stdin,
+                                          the default value is stdinSample
+-C <confidence interval (%)>            Compute expression of genes/isoforms
+                                          with specified confidence intervals.
+                                          Provide an integer (default: 95,
+                                          bootstraps: 200)
+--endseq                                Disable length normalization for data
+                                          generated using 5' or 3' end-sequen-
+                                          cing protocols, which generate a
+                                          single fragment per cDNA molecule
 
+Output
+------
+IsoEM2 generates the following outour files structure under a directory with the same name as the sam file, unless the -o is used
+
+
+<output_directory>
+    |
+    - output
+    |	|
+    |	- Isoforms
+    |   |   |
+    |	|   - iso_fpkm_estimates
+    |   |   - iso_tpm_estimates
+    |   - Genes 
+    |       |
+    |       - iso_fpkm_estimates
+    |       - iso_tpm_estimates
+    - ConfidenceIntervals (Only of -C option is used)
+    |   | 
+    |   - iso_fpkm_ci
+    |   - iso_tpm_ci
+    |   - gene_fpkm_ci 
+    |   - gene_tpm_ci
+    - boostrap.tar.gz
+
+Files under output/Isoforms and output/Genes are tab delimited files woth the following two fields
+1- Isoform/Gene ID
+2- Isoform/Gene FPKM (Fragments Per Kilobase per Million reads) or TPM (Transcripts per Million reads)
+
+Files under output/ConfidenceIntervals are tab delimited files with the following three fields
+1- Isoform/Gene ID
+2- Lower-bound for the 95% confidence interval of the Isoform/Gene FPKM/TPM estimate determined by bootstrapping
+3- Upper-bound for the 95% confidence interval of the Isoform/Gene FPKM/TPM estimate determined by bootstrapping
+
+boostrap.tar.gz is a compressed tar archive containing bootstrap samples used to determine confidence intervals. 
+This archive can be used as input to the IsoDE2 tool for computing differentially expressed isoforms/genes.
 
 Note: Read Alignment:
 ---------------------
 
-To align the reads you can either use spliced alignment directly 
-on the genome (for example using tophat), or you can align on the 
-library of known isoforms. We recommend the second option. If you 
-want to do this, we provide a full step by step guide at:
-http://dna.engr.uconn.edu/software/IsoEM/README-SAMPLE.TXT
-
+To align the reads you have one of two options:
+1) Use spliced alignment directly on the genome
+2) Use unspliced alignment to the transcriptome. 
+   If you have a transcriptome reference and no GTF (needed to run IsoEM2), you can use the fastaToGTF tool, included with the isoem2 suite, to generate a GTF.
+   If you want to generate a transcriptome reference using a GTF, you can use the extract-isoform-sequences-from-genome tool, included with the isoem2 suite
 
 4. Running IsoDE
 ----------------
@@ -139,7 +165,7 @@ http://dna.engr.uconn.edu/software/IsoEM/README-SAMPLE.TXT
 isode2 makes DE calls for gene/isoform FPKM and TPM estimated using the boostrapping output generated by isoem2
 
 
-isode -c1 <List of boostraping path for condition 1> -c2 <List of boostraping path for condition 2> -b <bootstrap-support> -dfc <desired-fold-Change> -out <name-of-output-file>
+isode -c1 <List of boostraping path for condition 1> -c2 <List of boostraping path for condition 2> -pval <desired p value> -out <output-files-prefix>
 
 
 Mandatory parameters
@@ -169,11 +195,11 @@ Description of Isode Output file:
 
 
 1- Gene/isoform ID
-2- Reliable log_2(FC) : conservative estimate of fold change in log base 2. 
+2- Confident log2(FC) : conservative estimate of fold change in log base 2. 
                For the confidence level specified by the input p-value, fold change of gene/isoform abundance (FPKM/TPM) in condition 2 compared condition 1 is 
                at least 2 ^ absoulte value of this field.The sign indicates the direction, +ve means over expressed in condition 2, -ve means underexpressed in
                condition 1. NDE indicates that no change was detected.
-3- log_2(condition 1 FPKM (or TPM)/condition 1 FPKM(or TPM)) based on isoem run without bootstrapping
+3- log2(condition 1 FPKM (or TPM)/condition 1 FPKM(or TPM)) based on isoem run without bootstrapping
 4- condition 1 FPKM (or TPM) based on isoem run without bootstrapping
 5- condition 2 FPKM (or TPM) based on isoem run without bootstrapping
 
@@ -183,9 +209,9 @@ Description of Isode Output file:
 
 Example
 -------
-isode -c1 /data1/BRAIN_UHR_Test/BRAIN_Genome_DIR/ /DataSet1/Test1_DIR/ -c2 /data1/BRAIN_UHR_Test/UHR_Genome_DIR/ /DataSet1/Test2_DIR/ -b 50 -dfc 2 -out "output1.txt"
+isode -c1 /data1/BRAIN_UHR_Test/BRAIN_Genome_DIR/ /DataSet1/Test1_DIR/ -c2 /data1/BRAIN_UHR_Test/UHR_Genome_DIR/ /DataSet1/Test2_DIR/ -pval 0.05 -out "output1.txt"
 
-isode -c1 ./BRAIN_Genome_DIR/ ./Test1_DIR/ -c2 ./UHR_Genome_DIR/ ./DataSet1/Test2_DIR/ -b 50 -dfc 2 -out "output2.txt"
+isode -c1 ./BRAIN_Genome_DIR/ ./Test1_DIR/ -c2 ./UHR_Genome_DIR/ ./DataSet1/Test2_DIR/ -pval 0.05 -out "output2.txt"
 
 
 
@@ -299,6 +325,4 @@ For questions or suggestions regarding IsoEM you can contact:
      Igor Mandric (imandric1@student.gsu.edu)
      Sahar Al Seesi (sahar@engr.uconn.edu)
      Ion Mandoiu (ion@engr.uconn.edu)
-     Marius Nicolae (man09004@engr.uconn.edu)
-     Serghei Mangul (serghei@cs.gsu.edu)
      Alex Zelikovsky (alexz@cs.gsu.edu)

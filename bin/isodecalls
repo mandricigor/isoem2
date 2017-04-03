@@ -1,6 +1,6 @@
 #!/bin/bash
 
-isoEMDir=/home/projects/isoem2/isoem-b
+isoEMDir=/galaxy-prod/galaxy/tools-dependencies/bin/isoem2
 
 START=$(date +%s)
 

@@ -190,7 +190,9 @@ public class Exp_Log_FC {
 			  
 			  System.out.println("map of 200 fpkm per genes and per sample created !"); 
 			  
-			  Map map_U_B_ratio = elfc.create_log_2_Exp_FC(map_geneU, map_geneB);
+//sahar 02/06/2017 fixing the order of FPKM1 and FPKM2 in output columns			  
+//			  Map map_U_B_ratio = elfc.create_log_2_Exp_FC(map_geneU, map_geneB);
+			  Map map_U_B_ratio = elfc.create_log_2_Exp_FC(map_geneB, map_geneU);
 			  elfc.write_log2_FC(map_U_B_ratio, "Exp_log2_FC.txt");
 			  
 			  System.out.println("Done !");
