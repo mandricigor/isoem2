@@ -1,35 +1,36 @@
-
-  IsoEM2 README
+isoem2/isoDE2 README
 
 
 1. Installation:
 ------------
 
-1. Create a isoem2 directory and download the compressed IsoEM2
+1. Create a isoem2 directory and download the git repository using 
+
    git clone https://github.com/mandricigor/isoem2.git
 
-3. run the linux shell script install provided in the compressed file
+3. run the linux shell script 'install' provided in the git repository
 
-4. [Optional] On windows you might want to add the IsoEM 
+4. [Optional] On windows you might want to add the isoem2/isoDE2  
    installation directory to the path, such that you can invoke 
-   isoem from any location. On linux, you can obtain a similar 
-   effect by creating a symbolic link to isoem2 and isoDE2 in /usr/local/bin.
+   isoem2 from any location. On linux, you can obtain a similar 
+   effect by creating a symbolic link to the isoem2 and isoDE2 executables 
+   in /usr/local/bin.
 
 
 
 2. Testing your installation:
 --------------------------
-To test the installation of IsoEM1 and IsoDE2, download the and unzip the following compressed archive and follow the instructions in 
-the README file included in the archive.
+To test the installation of isoem2 and isoDE2, download and unzip the following 
+compressed archive and follow the instructions in the README file included in the archive.
 
 http://dna.engr.uconn.edu/~software/IsoEM/testdata/IsoEM2IsoDE2-MAQC-Sample.zip
 
 
 
-3. Running IsoEM:
+3. Running isoem2:
 -----------------
 
-IsoEM2 takes as input a set of known isoforms in GTF format, and a 
+isoem2 takes as input a set of known isoforms in GTF format, and a 
 file with aligned reads in SAM format. The aligned reads MUST be 
 sorted by read name. If not sure, run this command to sort the 
 file:
@@ -37,13 +38,13 @@ file:
      sort -k 1,1 aligned_reads.sam > aligned_reads_sorted.sam
 
 
-You can run IsoEm from the command line as follows:
+You can run isoem2 from the command line as follows:
 
-     isoem [global options]* [library options]* <aligned_reads.sam>
+     isoem2 [global options]* [library options]* <aligned_reads.sam>
 
 Or, if you run provide read alignments from the standard input:
 
-     cat <aligned_reads.sam> | isoem [global options]* [library options]*
+     cat <aligned_reads.sam> | isoem2 [global options]* [library options]*
 
 
 Mandatory global options:
@@ -115,7 +116,8 @@ Optional library options:
 
 Output
 ------
-IsoEM2 generates the following outour files structure under a directory with the same name as the sam file, unless the -o is used
+isoem2 generates the following output files structure under a directory 
+with the same name as the sam file, unless the -o is used
 
 
 <output_directory>
@@ -130,7 +132,7 @@ IsoEM2 generates the following outour files structure under a directory with the
     |       |
     |       - iso_fpkm_estimates
     |       - iso_tpm_estimates
-    - ConfidenceIntervals (Only of -C option is used)
+    - ConfidenceIntervals (Only if -C option is used)
     |   | 
     |   - iso_fpkm_ci
     |   - iso_tpm_ci
@@ -138,7 +140,7 @@ IsoEM2 generates the following outour files structure under a directory with the
     |   - gene_tpm_ci
     - boostrap.tar.gz
 
-Files under output/Isoforms and output/Genes are tab delimited files woth the following two fields
+Files under output/Isoforms and output/Genes are tab delimited files with the following two fields
 1- Isoform/Gene ID
 2- Isoform/Gene FPKM (Fragments Per Kilobase per Million reads) or TPM (Transcripts per Million reads)
 
@@ -148,7 +150,7 @@ Files under output/ConfidenceIntervals are tab delimited files with the followin
 3- Upper-bound for the 95% confidence interval of the Isoform/Gene FPKM/TPM estimate determined by bootstrapping
 
 boostrap.tar.gz is a compressed tar archive containing bootstrap samples used to determine confidence intervals. 
-This archive can be used as input to the IsoDE2 tool for computing differentially expressed isoforms/genes.
+This archive can be used as input to the isoDE2 tool for computing differentially expressed isoforms/genes.
 
 Note: Read Alignment:
 ---------------------
@@ -156,16 +158,18 @@ Note: Read Alignment:
 To align the reads you have one of two options:
 1) Use spliced alignment directly on the genome
 2) Use unspliced alignment to the transcriptome. 
-   If you have a transcriptome reference and no GTF (needed to run IsoEM2), you can use the fastaToGTF tool, included with the isoem2 suite, to generate a GTF.
-   If you want to generate a transcriptome reference using a GTF, you can use the extract-isoform-sequences-from-genome tool, included with the isoem2 suite
+   If you have a transcriptome reference and no GTF (needed to run isoem2), 
+   you can use the fastaToGTF tool, included with the isoem2 suite, to generate a GTF.
+   If you want to generate a transcriptome reference using a GTF, you can use the 
+   extract-isoform-sequences-from-genome tool, included with the isoem2 suite
 
-4. Running IsoDE
+4. Running isoDE2
 ----------------
 
-isode2 makes DE calls for gene/isoform FPKM and TPM estimated using the boostrapping output generated by isoem2
+isoDE2 makes DE calls for gene/isoform FPKM and TPM estimated using the boostrapping output generated by isoem2
 
 
-isode -c1 <List of boostraping path for condition 1> -c2 <List of boostraping path for condition 2> -pval <desired p value> -out <output-files-prefix>
+isoDE2 -c1 <List of boostraping path for condition 1> -c2 <List of boostraping path for condition 2> -pval <desired p value> -out <output-files-prefix>
 
 
 Mandatory parameters
@@ -189,19 +193,23 @@ isoTPM
 
 All four output files have the same structure, described below
 
-Description of Isode Output file:
+Description of isoDE2 Output file:
 ---------------------------------
 
 
 
 1- Gene/isoform ID
-2- Confident log2(FC) : conservative estimate of fold change in log base 2. 
-               For the confidence level specified by the input p-value, fold change of gene/isoform abundance (FPKM/TPM) in condition 2 compared condition 1 is 
-               at least 2 ^ absoulte value of this field.The sign indicates the direction, +ve means over expressed in condition 2, -ve means underexpressed in
-               condition 1. NDE indicates that no change was detected.
-3- log2(condition 1 FPKM (or TPM)/condition 1 FPKM(or TPM)) based on isoem run without bootstrapping
-4- condition 1 FPKM (or TPM) based on isoem run without bootstrapping
-5- condition 2 FPKM (or TPM) based on isoem run without bootstrapping
+2- Confident log2(FC): the base 2 logarithm of the largest condition 2 vs condition 1 
+                       fold change of gene/isoform FPKM/TPM estimates supported by the 
+                       bootstrap samples at a significance level of 'pval'.  Positive values 
+                       represent over-expression in condition 2, negative values representing 
+                       over-expression in condition 1, and zero values indicate that no 
+                       significant change was detected.
+3- Single run log2(FC): the base 2 logarithm of the ratio between expression levels estimated 
+                        by isoem2 for condition 2 and condition 1 (or the mean estimates in case 
+                        replicates are provided for the two conditions).
+4- condition 1 FPKM (or TPM) based on isoem2 run without bootstrapping (mean value in case of replicates)
+5- condition 2 FPKM (or TPM) based on isoem2 run without bootstrapping (mean value in case of replicates)
 
 
 
@@ -209,9 +217,9 @@ Description of Isode Output file:
 
 Example
 -------
-isode -c1 /data1/BRAIN_UHR_Test/BRAIN_Genome_DIR/ /DataSet1/Test1_DIR/ -c2 /data1/BRAIN_UHR_Test/UHR_Genome_DIR/ /DataSet1/Test2_DIR/ -pval 0.05 -out "output1.txt"
+isoDE2 -c1 /data1/BRAIN_UHR_Test/BRAIN_Genome_DIR/ /DataSet1/Test1_DIR/ -c2 /data1/BRAIN_UHR_Test/UHR_Genome_DIR/ /DataSet1/Test2_DIR/ -pval 0.05 -out "output1.txt"
 
-isode -c1 ./BRAIN_Genome_DIR/ ./Test1_DIR/ -c2 ./UHR_Genome_DIR/ ./DataSet1/Test2_DIR/ -pval 0.05 -out "output2.txt"
+isoDE2 -c1 ./BRAIN_Genome_DIR/ ./Test1_DIR/ -c2 ./UHR_Genome_DIR/ ./DataSet1/Test2_DIR/ -pval 0.05 -out "output2.txt"
 
 
 
@@ -225,8 +233,8 @@ to the UCSC browser. The name of the output files are automaticaly generated fro
 file name and ends in _iso_read_coverage.bed and _isoforms_w_fpkm.gtf. They can also be set 
 using the -o option. 
 
-The options are almost the same as for isoem except that isoviz also needs the isoform frequency
-file (e.g. obtained by running isoem). The frequency file is specified using the -f option. The
+The options are almost the same as for isoem2 except that isoviz also needs the isoform frequency
+file (e.g. obtained by running isoem2). The frequency file is specified using the -f option. The
 full command line synopsis is given below:
 
 
@@ -236,7 +244,7 @@ full command line synopsis is given below:
 Mandatory global options:
 ------------------------
 -G, --GTF <GTF file>                    Known genes and isoforms in GTF format
--f <frequency file>                     Isoform FPKMs computed by IsoEM
+-f <frequency file>                     Isoform FPKMs computed by IsoEM2
 
 Mandatory library options:
 -------------------------
@@ -320,7 +328,7 @@ Version 1.0.0 (6/16/10)  - first public release
 
 Contact
 -------
-For questions or suggestions regarding IsoEM you can contact:
+For questions or suggestions regarding IsoEM2/IsoDE2 you can contact:
 
      Igor Mandric (imandric1@student.gsu.edu)
      Sahar Al Seesi (sahar@engr.uconn.edu)
