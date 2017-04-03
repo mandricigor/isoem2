@@ -1,3 +1,4 @@
+
 isoem2/isoDE2 README
 
 
@@ -193,10 +194,9 @@ isoTPM
 
 All four output files have the same structure, described below
 
+
 Description of isoDE2 Output file:
 ---------------------------------
-
-
 
 1- Gene/isoform ID
 2- Confident log2(FC): the base 2 logarithm of the largest condition 2 vs condition 1 
@@ -224,69 +224,6 @@ isoDE2 -c1 ./BRAIN_Genome_DIR/ ./Test1_DIR/ -c2 ./UHR_Genome_DIR/ ./DataSet1/Tes
 
 
 
-5. Visualizing read coverage:
------------------------------
-
-If you want to visualize the isoforms and their coverage by reads, you can use the isoviz 
-command. It produces a bedGraph file and a GTF with fpkm values file which can be uploaded 
-to the UCSC browser. The name of the output files are automaticaly generated from the input 
-file name and ends in _iso_read_coverage.bed and _isoforms_w_fpkm.gtf. They can also be set 
-using the -o option. 
-
-The options are almost the same as for isoem2 except that isoviz also needs the isoform frequency
-file (e.g. obtained by running isoem2). The frequency file is specified using the -f option. The
-full command line synopsis is given below:
-
-
-      isoviz [global options]* [library options]* <aligned_reads.sam>
-
-
-Mandatory global options:
-------------------------
--G, --GTF <GTF file>                    Known genes and isoforms in GTF format
--f <frequency file>                     Isoform FPKMs computed by IsoEM2
-
-Mandatory library options:
--------------------------
--m, --fragment-mean <Double>            Fragment length mean
--d, --fragment-std-dev <Double>         Fragment length standard deviation
-
-Optional global options:
------------------------
--c, --gene-clusters <Cluster file>      Override isoform to gene mapping
-                                          defined in the GTF file with a
-                                          mapping taken from the given file.
-                                          The format of each line in the file
-                                          is "isoform	gene"
--g <genome fasta file>                  Genome reference sequence (needed by
-                                          some library options)
--b                                      Perform hexamer bias correction
--h, --help                              Show help
-
-Optional library options:
-------------------------
--s, --directed                          Dataset obtained by directed RNA-Seq
-                                          (the strand of each read is
-                                          deterministically chosen: for single
-                                          reads, the read always comes from
-                                          the coding strand; for paired reads,
-                                          the first read always comes from the
-                                          coding strand, the second from the
-                                          opposite strand)
---mate-pairs                            Paired reads come from the same strand
-                                          (as opposed to the default behavior
-                                          where the two reads in a pair are
-                                          assumed to come from opposite
-                                          strands)
---max-mismatches <Integer>              Maximum number of mismatched allowed
-                                          for a read. This requires the genome
-                                          sequence to be specified (see -g).
-                                          Default: no limit.
--q, --quality-scores                    Weigh the reads based on their quality
-                                          scores. This requires the genome
-                                          sequence to be specified (see -g).
--o <file prefix>			Output files prefix. It can include path.
-					  Default: same as sam file name
 
 Source Code:
 ------------
@@ -302,6 +239,7 @@ Version 2.0.0 (1/20/16)  - added TPM estimates for genes and isoforms
                          - added option for reading alignments from standard input
 			 - integrated IsoDE with IsoEM
 			 - Added DE for isoform FPKMs and genes and isoforms TPMs 
+			 - Removed the isoviz visualization tool. To be added to the isoem2 suite in the future
 Version 1.1.4 (12/18/15) - added --counts option to generate expected read counts and --endseq to 
 			   handle data from end-sequencing protocols
 Version 1.1.3 (10/11/15) - bug fix in handling CIGAR with indels in convert-iso-to-genome-coords
@@ -334,3 +272,4 @@ For questions or suggestions regarding IsoEM2/IsoDE2 you can contact:
      Sahar Al Seesi (sahar@engr.uconn.edu)
      Ion Mandoiu (ion@engr.uconn.edu)
      Alex Zelikovsky (alexz@cs.gsu.edu)
+
